@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import RequestFormModal from "./RequestFormModal";
 
 const CTA = () => {
   return (
@@ -20,10 +21,12 @@ const CTA = () => {
             to access the information they deserve. Start your first request today.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button variant="hero" size="xl">
-              Start Your First Request
-              <ArrowRight className="w-5 h-5" />
-            </Button>
+            <RequestFormModal>
+              <Button variant="hero" size="xl">
+                Start Your First Request
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </RequestFormModal>
             <Button variant="heroOutline" size="xl">
               Talk to Our Team
             </Button>

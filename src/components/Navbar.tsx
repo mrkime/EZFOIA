@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { FileText, Menu, X } from "lucide-react";
 import { useState } from "react";
+import RequestFormModal from "./RequestFormModal";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,7 +32,9 @@ const Navbar = () => {
 
           <div className="hidden md:flex items-center gap-4">
             <Button variant="ghost">Sign In</Button>
-            <Button variant="hero">Get Started</Button>
+            <RequestFormModal>
+              <Button variant="hero">Get Started</Button>
+            </RequestFormModal>
           </div>
 
           {/* Mobile Menu Button */}
@@ -58,7 +61,9 @@ const Navbar = () => {
               </a>
               <div className="flex flex-col gap-2 pt-4">
                 <Button variant="ghost">Sign In</Button>
-                <Button variant="hero">Get Started</Button>
+                <RequestFormModal>
+                  <Button variant="hero">Get Started</Button>
+                </RequestFormModal>
               </div>
             </div>
           </div>

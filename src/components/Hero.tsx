@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Clock, FileSearch } from "lucide-react";
+import RequestFormModal from "./RequestFormModal";
 
 const Hero = () => {
   return (
@@ -32,11 +33,13 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <Button variant="hero" size="xl">
-              Start Your Request
-              <ArrowRight className="w-5 h-5" />
-            </Button>
-            <Button variant="heroOutline" size="xl">
+            <RequestFormModal>
+              <Button variant="hero" size="xl">
+                Start Your Request
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </RequestFormModal>
+            <Button variant="heroOutline" size="xl" onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>
               See How It Works
             </Button>
           </div>
