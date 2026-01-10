@@ -1,5 +1,6 @@
-import { FileText, Twitter, Linkedin, Mail } from "lucide-react";
+import { Twitter, Linkedin, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
+import Logo from "./Logo";
 
 const Footer = () => {
   const scrollToSection = (id: string) => {
@@ -15,12 +16,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
           <div className="md:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <FileText className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="font-display text-xl font-bold">EZFOIA</span>
-            </Link>
+            <div className="mb-4">
+              <Logo />
+            </div>
             <p className="text-muted-foreground text-sm mb-4">
               Making FOIA requests as easy as shopping online. A ClearSightAI company.
             </p>
