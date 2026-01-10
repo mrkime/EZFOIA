@@ -34,15 +34,18 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
-              How It Works
-            </a>
-            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">
               Features
-            </a>
-            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <a href="/#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
               Pricing
             </a>
+            <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">
+              About
+            </Link>
+            <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
+              Contact
+            </Link>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
@@ -94,15 +97,18 @@ const Navbar = () => {
         {isOpen && (
           <div className="md:hidden mt-4 pb-4 border-t border-border pt-4">
             <div className="flex flex-col gap-4">
-              <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
-                How It Works
-              </a>
-              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">
                 Features
-              </a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+              </Link>
+              <a href="/#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                 Pricing
               </a>
+              <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">
+                About
+              </Link>
+              <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
+                Contact
+              </Link>
               <div className="flex flex-col gap-2 pt-4">
                 {loading ? null : user ? (
                   <>
