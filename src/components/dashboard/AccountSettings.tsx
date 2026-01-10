@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { STRIPE_PRICES, matchesPlan } from "@/lib/stripe-config";
@@ -200,13 +201,14 @@ const AccountSettings = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
-                <Input
+                <PhoneInput
                   id="phone"
-                  type="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="(555) 123-4567"
+                  onChange={setPhone}
                 />
+                <p className="text-xs text-muted-foreground">
+                  US numbers only. Used for SMS notifications.
+                </p>
               </div>
               <Button
                 onClick={handleSaveProfile}
