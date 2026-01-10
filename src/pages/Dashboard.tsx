@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
+import SubscriptionStatus from "@/components/SubscriptionStatus";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { FileText, Download, Clock, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 interface FoiaRequest {
   id: string;
@@ -90,6 +92,7 @@ const getStatusConfig = (status: string) => {
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [requests, setRequests] = useState<FoiaRequest[]>([]);
   const [documents, setDocuments] = useState<Record<string, FoiaDocument[]>>({});
   const [loading, setLoading] = useState(true);
@@ -102,6 +105,15 @@ const Dashboard = () => {
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
+
+  // Show success toast if coming from payment
+  useEffect(() => {
+    if (searchParams.get("payment") === "success") {
+      toast.success("Payment successful! Thank you for your purchase.");
+      // Clear the query param
+      navigate("/dashboard", { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   useEffect(() => {
     if (user) {
@@ -207,8 +219,9 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        {/* Subscription + Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+          <SubscriptionStatus />
           <Card className="bg-card-gradient border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
