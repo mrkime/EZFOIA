@@ -1,25 +1,34 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Check, ArrowRight, Loader2, Sparkles, Zap, Building2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { STRIPE_PRICES, PlanKey } from "@/lib/stripe-config";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-const plans: {
+interface Plan {
   name: string;
-  price: string;
+  monthlyPrice: string;
+  annualPrice: string;
   period: string;
   description: string;
   features: string[];
   cta: string;
   featured: boolean;
   planKey: PlanKey;
-}[] = [
+  icon: React.ElementType;
+  gradient: string;
+}
+
+const plans: Plan[] = [
   {
     name: "Single Request",
-    price: "$75",
+    monthlyPrice: "$75",
+    annualPrice: "$75",
     period: "per request",
     description: "Perfect for one-time FOIA requests",
     features: [
@@ -32,10 +41,13 @@ const plans: {
     cta: "Submit Request",
     featured: false,
     planKey: "single",
+    icon: Zap,
+    gradient: "from-blue-500/20 to-cyan-500/20",
   },
   {
     name: "Professional",
-    price: "$200",
+    monthlyPrice: "$200",
+    annualPrice: "$170",
     period: "per month",
     description: "For regular research and investigations",
     features: [
@@ -49,10 +61,13 @@ const plans: {
     cta: "Start Subscription",
     featured: true,
     planKey: "professional",
+    icon: Sparkles,
+    gradient: "from-primary/20 to-emerald-500/20",
   },
   {
     name: "Enterprise",
-    price: "$500",
+    monthlyPrice: "$500",
+    annualPrice: "$425",
     period: "per month",
     description: "For newsrooms and heavy users",
     features: [
@@ -67,13 +82,21 @@ const plans: {
     cta: "Start Subscription",
     featured: false,
     planKey: "enterprise",
+    icon: Building2,
+    gradient: "from-amber-500/20 to-orange-500/20",
   },
 ];
 
-const Pricing = () => {
+interface PricingProps {
+  showHeader?: boolean;
+  className?: string;
+}
+
+const Pricing = ({ showHeader = true, className }: PricingProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
 
   const handleCheckout = async (planKey: PlanKey) => {
     if (!user) {
@@ -104,76 +127,214 @@ const Pricing = () => {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut" as const,
+      },
+    },
+  };
+
   return (
-    <section id="pricing" className="py-24 bg-background">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
-          <span className="text-primary font-semibold text-sm uppercase tracking-wider">Pricing</span>
-          <h2 className="font-display text-3xl md:text-5xl font-bold mt-4 mb-6">
-            Transparent Pricing for{' '}
-            <span className="text-gradient">Transparency</span>
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Simple, straightforward pricing. Any filing fees charged by agencies are billed directly to you at cost.
-          </p>
-        </div>
+    <section id="pricing" className={cn("py-24 bg-background relative overflow-hidden", className)}>
+      {/* Background Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`relative rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 ${
-                plan.featured
-                  ? 'bg-card-gradient border-2 border-primary shadow-glow'
-                  : 'glass'
-              }`}
-            >
-              {plan.featured && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="bg-cta-gradient text-primary-foreground text-sm font-semibold px-4 py-1 rounded-full">
-                    Most Popular
-                  </span>
-                </div>
-              )}
+      <div className="container mx-auto px-6 relative">
+        {showHeader && (
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="inline-flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-wider mb-4">
+              <Sparkles className="w-4 h-4" />
+              Pricing
+            </span>
+            <h2 className="font-display text-3xl md:text-5xl font-bold mt-4 mb-6">
+              Transparent Pricing for{' '}
+              <span className="text-gradient">Transparency</span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
+              Simple, straightforward pricing. Any filing fees charged by agencies are billed directly to you at cost.
+            </p>
 
-              <div className="mb-6">
-                <h3 className="font-display text-xl font-semibold mb-2">{plan.name}</h3>
-                <p className="text-muted-foreground text-sm">{plan.description}</p>
-              </div>
-
-              <div className="mb-8">
-                <span className="font-display text-4xl font-bold">{plan.price}</span>
-                <span className="text-muted-foreground ml-2">{plan.period}</span>
-              </div>
-
-              <ul className="space-y-4 mb-8">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Button
-                variant={plan.featured ? "hero" : "heroOutline"}
-                size="lg"
-                className="w-full"
-                onClick={() => handleCheckout(plan.planKey)}
-                disabled={loadingPlan !== null}
-              >
-                {loadingPlan === plan.planKey ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    {plan.cta}
-                    <ArrowRight className="w-4 h-4" />
-                  </>
+            {/* Billing Toggle */}
+            <div className="flex items-center justify-center gap-4">
+              <button
+                onClick={() => setBillingPeriod("monthly")}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                  billingPeriod === "monthly" 
+                    ? "bg-primary text-primary-foreground" 
+                    : "text-muted-foreground hover:text-foreground"
                 )}
-              </Button>
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBillingPeriod("annual")}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-medium transition-all relative",
+                  billingPeriod === "annual" 
+                    ? "bg-primary text-primary-foreground" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Annual
+                <Badge className="absolute -top-3 -right-10 bg-emerald-500 text-white text-[10px] px-1.5 py-0.5">
+                  Save 15%
+                </Badge>
+              </button>
             </div>
-          ))}
-        </div>
+          </motion.div>
+        )}
+
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+        >
+          {plans.map((plan, index) => {
+            const IconComponent = plan.icon;
+            const displayPrice = billingPeriod === "annual" ? plan.annualPrice : plan.monthlyPrice;
+            
+            return (
+              <motion.div
+                key={plan.name}
+                variants={cardVariants}
+                whileHover={{ y: -8, transition: { duration: 0.3 } }}
+                className={cn(
+                  "relative rounded-2xl p-8 transition-all duration-300 group",
+                  plan.featured
+                    ? "bg-card border-2 border-primary shadow-glow"
+                    : "bg-card/50 border border-border hover:border-primary/50"
+                )}
+              >
+                {/* Gradient Overlay */}
+                <div className={cn(
+                  "absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br -z-10",
+                  plan.gradient
+                )} />
+
+                {plan.featured && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <motion.span 
+                      className="bg-cta-gradient text-primary-foreground text-sm font-semibold px-4 py-1.5 rounded-full inline-flex items-center gap-1.5 shadow-lg"
+                      initial={{ scale: 0.9 }}
+                      animate={{ scale: [0.9, 1.05, 1] }}
+                      transition={{ duration: 0.5, delay: 0.3 }}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Most Popular
+                    </motion.span>
+                  </div>
+                )}
+
+                {/* Icon */}
+                <div className={cn(
+                  "w-12 h-12 rounded-xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110",
+                  plan.featured ? "bg-primary/20" : "bg-muted"
+                )}>
+                  <IconComponent className={cn(
+                    "w-6 h-6",
+                    plan.featured ? "text-primary" : "text-muted-foreground"
+                  )} />
+                </div>
+
+                <div className="mb-6">
+                  <h3 className="font-display text-xl font-semibold mb-2">{plan.name}</h3>
+                  <p className="text-muted-foreground text-sm">{plan.description}</p>
+                </div>
+
+                <div className="mb-8">
+                  <div className="flex items-baseline gap-1">
+                    <span className="font-display text-4xl font-bold">{displayPrice}</span>
+                    <span className="text-muted-foreground">/{plan.period.replace("per ", "")}</span>
+                  </div>
+                  {billingPeriod === "annual" && plan.planKey !== "single" && (
+                    <p className="text-sm text-emerald-500 mt-1">
+                      Save ${plan.planKey === "professional" ? "360" : "900"}/year
+                    </p>
+                  )}
+                </div>
+
+                <ul className="space-y-4 mb-8">
+                  {plan.features.map((feature, featureIndex) => (
+                    <motion.li 
+                      key={feature} 
+                      className="flex items-start gap-3"
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.1 + featureIndex * 0.05 }}
+                    >
+                      <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <Check className="w-3 h-3 text-primary" />
+                      </div>
+                      <span className="text-muted-foreground text-sm">{feature}</span>
+                    </motion.li>
+                  ))}
+                </ul>
+
+                <Button
+                  variant={plan.featured ? "hero" : "heroOutline"}
+                  size="lg"
+                  className="w-full group/btn"
+                  onClick={() => handleCheckout(plan.planKey)}
+                  disabled={loadingPlan !== null}
+                >
+                  {loadingPlan === plan.planKey ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      {plan.cta}
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
+                    </>
+                  )}
+                </Button>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+
+        {/* Footer Note */}
+        <motion.div 
+          className="text-center mt-12"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.5 }}
+        >
+          <p className="text-muted-foreground text-sm">
+            Need a custom plan?{" "}
+            <Link to="/contact" className="text-primary hover:underline">
+              Contact us
+            </Link>{" "}
+            for enterprise solutions.
+          </p>
+        </motion.div>
       </div>
     </section>
   );

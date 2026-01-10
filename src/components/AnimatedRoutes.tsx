@@ -8,6 +8,7 @@ import RequestDetails from "@/pages/RequestDetails";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import FeaturesPage from "@/pages/FeaturesPage";
+import PricingPage from "@/pages/PricingPage";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import NotFound from "@/pages/NotFound";
@@ -35,6 +36,7 @@ const AnimatedRoutes = () => {
         <Route path="/about" element={<PageTransition><About /></PageTransition>} />
         <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
         <Route path="/features" element={<PageTransition><FeaturesPage /></PageTransition>} />
+        <Route path="/pricing" element={<PageTransition><PricingPage /></PageTransition>} />
         <Route path="/payment-success" element={<PageTransition><PaymentSuccess /></PageTransition>} />
         <Route path="/api-access" element={<PageTransition><ApiAccess /></PageTransition>} />
         <Route path="/foia-guide" element={<PageTransition><FoiaGuide /></PageTransition>} />

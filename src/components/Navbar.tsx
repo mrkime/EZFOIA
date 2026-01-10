@@ -88,15 +88,15 @@ const Navbar = () => {
                       </li>
                       <li>
                         <NavigationMenuLink asChild>
-                          <button
-                            onClick={() => scrollToSection("pricing")}
-                            className="w-full text-left block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          <Link
+                            to="/pricing"
+                            className="block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                           >
                             <div className="text-sm font-medium leading-none">Pricing</div>
                             <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
                               Flexible plans for every need
                             </p>
-                          </button>
+                          </Link>
                         </NavigationMenuLink>
                       </li>
                       <li>
@@ -264,9 +264,9 @@ const Navbar = () => {
                   <button onClick={() => { scrollToSection("how-it-works"); setIsOpen(false); }} className="text-left text-muted-foreground hover:text-foreground py-1">
                     How It Works
                   </button>
-                  <button onClick={() => { scrollToSection("pricing"); setIsOpen(false); }} className="text-left text-muted-foreground hover:text-foreground py-1">
+                  <Link to="/pricing" onClick={() => setIsOpen(false)} className="text-muted-foreground hover:text-foreground py-1">
                     Pricing
-                  </button>
+                  </Link>
                   <Link to="/api-access" onClick={() => setIsOpen(false)} className="text-muted-foreground hover:text-foreground py-1">
                     API Access
                   </Link>
