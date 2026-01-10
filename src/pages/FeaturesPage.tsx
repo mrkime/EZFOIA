@@ -1,7 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Smartphone, 
@@ -132,6 +132,18 @@ const additionalFeatures = [
 ];
 
 const FeaturesPage = () => {
+  const navigate = useNavigate();
+
+  const goToPricing = () => {
+    navigate("/");
+    setTimeout(() => {
+      const pricingSection = document.getElementById("pricing");
+      if (pricingSection) {
+        pricingSection.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -176,12 +188,10 @@ const FeaturesPage = () => {
               transition={{ delay: 0.3 }}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
-              <Link to="/#pricing">
-                <Button variant="hero" size="lg" className="gap-2 w-full sm:w-auto">
-                  See Plans & Pricing
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
+              <Button variant="hero" size="lg" className="gap-2 w-full sm:w-auto" onClick={goToPricing}>
+                See Plans & Pricing
+                <ArrowRight className="w-4 h-4" />
+              </Button>
               <Link to="/foia-guide">
                 <Button variant="outline" size="lg" className="w-full sm:w-auto">
                   Learn About FOIA
@@ -430,15 +440,13 @@ const FeaturesPage = () => {
                 Join thousands of journalists, researchers, and citizens who trust EZFOIA for their public records requests.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/#pricing">
-                  <Button variant="hero" size="lg" className="gap-2 w-full sm:w-auto">
-                    View Plans & Get Started
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </Link>
-                <Link to="/contact">
+                <Button variant="hero" size="lg" className="gap-2 w-full sm:w-auto" onClick={goToPricing}>
+                  View Plans & Get Started
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+                <Link to="/help">
                   <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                    Contact Sales
+                    Visit Help Center
                   </Button>
                 </Link>
               </div>
