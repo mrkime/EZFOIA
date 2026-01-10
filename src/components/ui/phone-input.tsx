@@ -8,7 +8,7 @@ interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElemen
 }
 
 /**
- * Formats a phone number for display: +1 (XXX) XXX-XXXX
+ * Formats a phone number for display: (XXX) XXX-XXXX
  */
 function formatPhoneDisplay(digits: string): string {
   if (digits.length === 0) return "";
@@ -39,56 +39,26 @@ function toE164(digits: string): string {
 
 const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
   ({ className, value, onChange, ...props }, ref) => {
-    // Extract digits from the stored E.164 value
-    const digits = extractDigits(value);
-    const displayValue = formatPhoneDisplay(digits);
+    // Use local state for digits to avoid re-render issues
+    const [localDigits, setLocalDigits] = React.useState(() => extractDigits(value));
     
-    // Track cursor position for better UX
-    const inputRef = React.useRef<HTMLInputElement>(null);
-    
-    // Merge refs
-    React.useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
+    // Sync local state with prop changes (e.g., form reset)
+    React.useEffect(() => {
+      const propDigits = extractDigits(value);
+      if (propDigits !== localDigits) {
+        setLocalDigits(propDigits);
+      }
+    }, [value]);
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      const input = inputRef.current;
-      if (!input) return;
+    const displayValue = formatPhoneDisplay(localDigits);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const rawInput = e.target.value;
+      // Extract only new digits from the raw input
+      const inputDigits = rawInput.replace(/\D/g, "").slice(0, 10);
       
-      // Allow: backspace, delete, tab, escape, enter, arrow keys
-      if (
-        e.key === "Backspace" ||
-        e.key === "Delete" ||
-        e.key === "Tab" ||
-        e.key === "Escape" ||
-        e.key === "Enter" ||
-        e.key === "ArrowLeft" ||
-        e.key === "ArrowRight" ||
-        e.key === "ArrowUp" ||
-        e.key === "ArrowDown"
-      ) {
-        if (e.key === "Backspace" || e.key === "Delete") {
-          e.preventDefault();
-          // Remove last digit
-          const newDigits = digits.slice(0, -1);
-          onChange(toE164(newDigits));
-        }
-        return;
-      }
-      
-      // Only allow digits
-      if (!/^\d$/.test(e.key)) {
-        e.preventDefault();
-        return;
-      }
-      
-      // Prevent if we're at max length
-      if (digits.length >= 10) {
-        e.preventDefault();
-        return;
-      }
-      
-      e.preventDefault();
-      const newDigits = digits + e.key;
-      onChange(toE164(newDigits));
+      setLocalDigits(inputDigits);
+      onChange(toE164(inputDigits));
     };
 
     return (
@@ -97,13 +67,12 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
           +1
         </span>
         <Input
-          ref={inputRef}
+          ref={ref}
           type="tel"
           inputMode="numeric"
           className={cn("pl-10", className)}
           value={displayValue}
-          onKeyDown={handleKeyDown}
-          onChange={() => {}} // Controlled via onKeyDown
+          onChange={handleChange}
           placeholder="(555) 123-4567"
           {...props}
         />
