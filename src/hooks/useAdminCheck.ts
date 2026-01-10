@@ -15,6 +15,9 @@ export function useAdminCheck() {
         return;
       }
 
+      // Reset loading state when user changes
+      setIsLoading(true);
+
       try {
         const { data, error } = await supabase
           .from('user_roles')
