@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.customer-portal]
 verify_jwt = false
+
+[functions.notify-status-change]
+verify_jwt = false
+
+[functions.foia-assistant]
+verify_jwt = false

@@ -35,6 +35,7 @@ import { Loader2, CheckCircle, ArrowRight, LogIn, Crown, Check } from "lucide-re
 import { useNavigate } from "react-router-dom";
 import { requestSchema, type RequestFormData } from "@/lib/request-validation";
 import { logger } from "@/lib/logger";
+import AIDescriptionAssistant from "./AIDescriptionAssistant";
 
 export const PENDING_REQUEST_KEY = "pending_foia_request";
 
@@ -551,6 +552,13 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
                           />
                         </FormControl>
                         <FormMessage />
+                        <AIDescriptionAssistant
+                          agencyName={form.watch("agencyName")}
+                          agencyType={form.watch("agencyType")}
+                          recordType={form.watch("recordType")}
+                          currentDescription={field.value}
+                          onSuggestion={(suggestion) => form.setValue("recordDescription", suggestion)}
+                        />
                       </FormItem>
                     )}
                   />
