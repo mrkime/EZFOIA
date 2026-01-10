@@ -178,13 +178,13 @@ const FeaturesPage = () => {
             >
               <Link to="/#pricing">
                 <Button variant="hero" size="lg" className="gap-2 w-full sm:w-auto">
-                  Start Free Trial
+                  See Plans & Pricing
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
-              <Link to="/contact">
+              <Link to="/foia-guide">
                 <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                  Talk to Sales
+                  Learn About FOIA
                 </Button>
               </Link>
             </motion.div>
