@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
@@ -14,6 +14,7 @@ const AdminDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminCheck();
   const navigate = useNavigate();
+  const checkedUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -22,7 +23,19 @@ const AdminDashboard = () => {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (!adminLoading && !isAdmin && user) {
+    if (!user) {
+      checkedUserIdRef.current = null;
+      return;
+    }
+
+    // Avoid redirecting on the first render after a user logs in, before the admin check
+    // has had a chance to run for that user.
+    if (!adminLoading && checkedUserIdRef.current !== user.id) {
+      checkedUserIdRef.current = user.id;
+      return;
+    }
+
+    if (!adminLoading && !isAdmin) {
       navigate('/dashboard');
     }
   }, [isAdmin, adminLoading, user, navigate]);
