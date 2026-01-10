@@ -7,26 +7,29 @@ import RequestFormModal from "./RequestFormModal";
 const AnimatedGrid = () => {
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {/* Base grid pattern */}
+      {/* Subtle background tint for light mode contrast */}
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] via-transparent to-primary/[0.02] dark:from-transparent dark:to-transparent" />
+      
+      {/* Base grid pattern - stronger in light mode */}
       <div 
-        className="absolute inset-0 opacity-[0.15]"
+        className="absolute inset-0 opacity-20 dark:opacity-[0.15]"
         style={{
           backgroundImage: `
-            linear-gradient(to right, hsl(var(--primary) / 0.3) 1px, transparent 1px),
-            linear-gradient(to bottom, hsl(var(--primary) / 0.3) 1px, transparent 1px)
+            linear-gradient(to right, hsl(var(--primary) / 0.5) 1px, transparent 1px),
+            linear-gradient(to bottom, hsl(var(--primary) / 0.5) 1px, transparent 1px)
           `,
           backgroundSize: '60px 60px',
         }}
       />
       
-      {/* Animated glow lines - horizontal */}
+      {/* Animated glow lines - horizontal - stronger for light mode */}
       {[...Array(3)].map((_, i) => (
         <motion.div
           key={`h-${i}`}
-          className="absolute h-[1px] left-0 right-0"
+          className="absolute h-[2px] dark:h-[1px] left-0 right-0"
           style={{ 
             top: `${25 + i * 25}%`,
-            background: 'linear-gradient(90deg, transparent, hsl(var(--primary) / 0.6), transparent)',
+            background: 'linear-gradient(90deg, transparent, hsl(var(--primary) / 0.8), transparent)',
           }}
           initial={{ x: '-100%', opacity: 0 }}
           animate={{ 
@@ -42,14 +45,14 @@ const AnimatedGrid = () => {
         />
       ))}
       
-      {/* Animated glow lines - vertical */}
+      {/* Animated glow lines - vertical - stronger for light mode */}
       {[...Array(2)].map((_, i) => (
         <motion.div
           key={`v-${i}`}
-          className="absolute w-[1px] top-0 bottom-0"
+          className="absolute w-[2px] dark:w-[1px] top-0 bottom-0"
           style={{ 
             left: `${35 + i * 30}%`,
-            background: 'linear-gradient(180deg, transparent, hsl(var(--primary) / 0.5), transparent)',
+            background: 'linear-gradient(180deg, transparent, hsl(var(--primary) / 0.7), transparent)',
           }}
           initial={{ y: '-100%', opacity: 0 }}
           animate={{ 
@@ -65,7 +68,7 @@ const AnimatedGrid = () => {
         />
       ))}
       
-      {/* Grid intersection glows */}
+      {/* Grid intersection glows - stronger in light mode */}
       {[...Array(4)].map((_, i) => (
         <motion.div
           key={`glow-${i}`}
@@ -73,11 +76,11 @@ const AnimatedGrid = () => {
           style={{
             left: `${20 + (i % 2) * 50}%`,
             top: `${25 + Math.floor(i / 2) * 40}%`,
-            background: 'radial-gradient(circle, hsl(var(--primary) / 0.15) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, hsl(var(--primary) / 0.25) 0%, transparent 70%)',
           }}
           animate={{
             scale: [1, 1.5, 1],
-            opacity: [0.3, 0.6, 0.3],
+            opacity: [0.4, 0.7, 0.4],
           }}
           transition={{
             duration: 4 + i,
@@ -88,16 +91,19 @@ const AnimatedGrid = () => {
         />
       ))}
       
-      {/* Corner accent gradients */}
-      <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-to-br from-primary/5 to-transparent" />
-      <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-tl from-primary/5 to-transparent" />
+      {/* Corner accent gradients - enhanced for light mode */}
+      <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-to-br from-primary/10 dark:from-primary/5 to-transparent" />
+      <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-tl from-primary/10 dark:from-primary/5 to-transparent" />
     </div>
   );
 };
 
 const CTA = () => {
   return (
-    <section className="py-24 bg-card relative overflow-hidden">
+    <section className="py-24 bg-section-alt dark:bg-card relative overflow-hidden">
+      {/* Section divider */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-3xl" />

@@ -61,6 +61,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        section: {
+          alt: "hsl(var(--section-alt, var(--muted)))",
+          "alt-2": "hsl(var(--section-alt-2, var(--secondary)))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
