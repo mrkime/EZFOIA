@@ -4,11 +4,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Shield, FileText, Users, Settings } from 'lucide-react';
+import { Shield, FileText, Users, Settings, BookOpen, HelpCircle } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import AdminRequestsTable from '@/components/admin/AdminRequestsTable';
 import AdminUsersTable from '@/components/admin/AdminUsersTable';
 import AdminSettings from '@/components/admin/AdminSettings';
+import AdminBlogManager from '@/components/admin/AdminBlogManager';
+import AdminHelpArticlesManager from '@/components/admin/AdminHelpArticlesManager';
 
 const AdminDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -66,12 +68,12 @@ const AdminDashboard = () => {
           </div>
           <div>
             <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Manage requests, users, and site settings</p>
+            <p className="text-muted-foreground">Manage requests, users, content, and site settings</p>
           </div>
         </div>
 
         <Tabs defaultValue="requests" className="space-y-6">
-          <TabsList className="glass">
+          <TabsList className="glass flex-wrap h-auto gap-1 p-1">
             <TabsTrigger value="requests" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Requests
@@ -79,6 +81,14 @@ const AdminDashboard = () => {
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Users
+            </TabsTrigger>
+            <TabsTrigger value="blog" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Blog
+            </TabsTrigger>
+            <TabsTrigger value="help" className="flex items-center gap-2">
+              <HelpCircle className="h-4 w-4" />
+              Help Articles
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -92,6 +102,14 @@ const AdminDashboard = () => {
 
           <TabsContent value="users">
             <AdminUsersTable />
+          </TabsContent>
+
+          <TabsContent value="blog">
+            <AdminBlogManager />
+          </TabsContent>
+
+          <TabsContent value="help">
+            <AdminHelpArticlesManager />
           </TabsContent>
 
           <TabsContent value="settings">
