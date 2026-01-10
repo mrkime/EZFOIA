@@ -150,7 +150,7 @@ const Auth = () => {
           </div>
 
           {isSignUp ? (
-            <Form {...signUpForm}>
+            <Form {...signUpForm} key="signup-form">
               <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
                 <FormField
                   control={signUpForm.control}
@@ -162,11 +162,7 @@ const Auth = () => {
                         <Input 
                           placeholder="John Doe" 
                           className="bg-card border-border" 
-                          value={field.value}
-                          onChange={field.onChange}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -184,11 +180,7 @@ const Auth = () => {
                           type="email" 
                           placeholder="john@example.com" 
                           className="bg-card border-border" 
-                          value={field.value}
-                          onChange={field.onChange}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -206,11 +198,7 @@ const Auth = () => {
                           type="password" 
                           placeholder="••••••••" 
                           className="bg-card border-border" 
-                          value={field.value}
-                          onChange={field.onChange}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -228,11 +216,7 @@ const Auth = () => {
                           type="password" 
                           placeholder="••••••••" 
                           className="bg-card border-border" 
-                          value={field.value}
-                          onChange={field.onChange}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -245,7 +229,7 @@ const Auth = () => {
               </form>
             </Form>
           ) : (
-            <Form {...signInForm}>
+            <Form {...signInForm} key="signin-form">
               <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
                 <FormField
                   control={signInForm.control}
@@ -258,11 +242,7 @@ const Auth = () => {
                           type="email" 
                           placeholder="john@example.com" 
                           className="bg-card border-border" 
-                          value={field.value}
-                          onChange={field.onChange}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -280,11 +260,7 @@ const Auth = () => {
                           type="password" 
                           placeholder="••••••••" 
                           className="bg-card border-border" 
-                          value={field.value}
-                          onChange={field.onChange}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
