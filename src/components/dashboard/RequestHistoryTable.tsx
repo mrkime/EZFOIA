@@ -11,11 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Clock, CheckCircle, AlertCircle, Loader2, Eye, Plus } from "lucide-react";
+import { FileText, Clock, CheckCircle, AlertCircle, Loader2, Eye, Plus, Search } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import RequestFilters from "./RequestFilters";
 import RequestFormModal from "@/components/RequestFormModal";
+import EmptyState from "@/components/ui/empty-state";
 import { toast } from "sonner";
 
 interface FoiaRequest {
@@ -154,17 +155,20 @@ const RequestHistoryTable = ({ requests, loading }: RequestHistoryTableProps) =>
             ))}
           </div>
         ) : requests.length === 0 ? (
-          <div className="text-center py-12">
-            <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-4">
-              You haven't submitted any FOIA requests yet.
-            </p>
-            <RequestFormModal>
-              <Button variant="hero">
-                Submit Your First Request
-              </Button>
-            </RequestFormModal>
-          </div>
+          <EmptyState
+            icon={FileText}
+            title="No Requests Yet"
+            description="You haven't submitted any FOIA requests yet."
+            secondaryDescription="Start by filing your first request to access public records."
+            actionElement={
+              <RequestFormModal>
+                <Button variant="hero" className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Submit Your First Request
+                </Button>
+              </RequestFormModal>
+            }
+          />
         ) : (
           <>
             <RequestFilters
@@ -178,12 +182,17 @@ const RequestHistoryTable = ({ requests, loading }: RequestHistoryTableProps) =>
             />
             
             {filteredRequests.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No requests match your filters.</p>
-                <Button variant="ghost" onClick={handleClearFilters} className="mt-2">
-                  Clear Filters
-                </Button>
-              </div>
+              <EmptyState
+                icon={Search}
+                title="No Matching Results"
+                description="No requests match your current filters."
+                secondaryDescription="Try adjusting your search terms or clearing the filters."
+                variant="minimal"
+                action={{
+                  label: "Clear Filters",
+                  onClick: handleClearFilters,
+                }}
+              />
             ) : (
             <div className="overflow-x-auto">
             <Table>

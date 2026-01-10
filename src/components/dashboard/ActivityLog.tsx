@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { logger } from "@/lib/logger";
 import { format, formatDistanceToNow } from "date-fns";
+import EmptyState from "@/components/ui/empty-state";
 import { 
   Activity, 
   FileText, 
@@ -93,15 +94,13 @@ const ActivityLog = () => {
             ))}
           </div>
         ) : activities.length === 0 ? (
-          <div className="text-center py-12">
-            <Clock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">
-              No recent activity to show.
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Your activity will appear here as you use the platform.
-            </p>
-          </div>
+          <EmptyState
+            icon={Activity}
+            title="No Recent Activity"
+            description="Your activity will appear here as you use the platform."
+            secondaryDescription="Submit a request or update your settings to see activity."
+            variant="minimal"
+          />
         ) : (
           <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-4">
