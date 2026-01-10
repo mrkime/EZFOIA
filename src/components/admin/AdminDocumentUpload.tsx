@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, File, X, Loader2 } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 interface FoiaRequest {
   id: string;
@@ -74,7 +75,7 @@ const AdminDocumentUpload = ({
           .upload(filePath, file);
 
         if (uploadError) {
-          console.error('Upload error:', uploadError);
+          logger.error('Upload error:', uploadError);
           toast({
             title: 'Upload Failed',
             description: `Failed to upload ${file.name}: ${uploadError.message}`,
@@ -93,7 +94,7 @@ const AdminDocumentUpload = ({
         });
 
         if (dbError) {
-          console.error('Database error:', dbError);
+          logger.error('Database error:', dbError);
           toast({
             title: 'Database Error',
             description: `Failed to record ${file.name}: ${dbError.message}`,
@@ -115,7 +116,7 @@ const AdminDocumentUpload = ({
         onOpenChange(false);
       }
     } catch (error) {
-      console.error('Upload error:', error);
+      logger.error('Upload error:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred during upload',

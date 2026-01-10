@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
+import { logger } from "@/lib/logger";
 
 interface FoiaRequest {
   id: string;
@@ -54,7 +55,7 @@ const DashboardSummary = ({ requests, loading }: DashboardSummaryProps) => {
       setSubscription(data);
       if (showRefreshToast) toast.success("Subscription status updated");
     } catch (error) {
-      console.error("Error checking subscription:", error);
+      logger.error("Error checking subscription:", error);
       setSubscription({ subscribed: false, product_id: null, price_id: null, subscription_end: null });
     } finally {
       setSubLoading(false);

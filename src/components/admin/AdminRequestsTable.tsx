@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Eye, Upload, Search, Clock, CheckCircle, FileText, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import AdminDocumentUpload from './AdminDocumentUpload';
+import { logger } from '@/lib/logger';
 
 interface FoiaRequest {
   id: string;
@@ -51,7 +52,7 @@ const AdminRequestsTable = () => {
       if (error) throw error;
       setRequests(data || []);
     } catch (error) {
-      console.error('Error fetching requests:', error);
+      logger.error('Error fetching requests:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch requests',
@@ -88,7 +89,7 @@ const AdminRequestsTable = () => {
         description: `Request status changed to ${newStatus}`,
       });
     } catch (error) {
-      console.error('Error updating status:', error);
+      logger.error('Error updating status:', error);
       toast({
         title: 'Error',
         description: 'Failed to update status',
