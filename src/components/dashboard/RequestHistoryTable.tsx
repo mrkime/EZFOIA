@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TableRowSkeleton } from "@/components/ui/skeletons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -149,9 +150,16 @@ const RequestHistoryTable = ({ requests, loading }: RequestHistoryTableProps) =>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <Skeleton key={i} className="h-16 w-full" />
+          <div className="space-y-0">
+            {/* Filters skeleton */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <Skeleton className="h-10 flex-1 max-w-sm rounded-lg" />
+              <Skeleton className="h-10 w-32 rounded-lg" />
+              <Skeleton className="h-10 w-24 rounded-lg" />
+            </div>
+            {/* Table rows skeleton */}
+            {[...Array(5)].map((_, i) => (
+              <TableRowSkeleton key={i} columns={6} />
             ))}
           </div>
         ) : requests.length === 0 ? (
