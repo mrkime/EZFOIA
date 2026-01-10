@@ -11,6 +11,33 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 10;
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+const checkRateLimit = (identifier: string): { allowed: boolean; retryAfter?: number } => {
+  const now = Date.now();
+  const record = rateLimitMap.get(identifier);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true };
+  }
+  
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return { allowed: false, retryAfter: Math.ceil((record.resetTime - now) / 1000) };
+  }
+  
+  record.count++;
+  return { allowed: true };
+};
+
+const logStep = (step: string, details?: Record<string, unknown>) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[SEND-CONFIRMATION] ${step}${detailsStr}`);
+};
+
 // Input validation schema
 const emailRequestSchema = z.object({
   to: z.string().email("Invalid email format").max(255, "Email too long"),
@@ -21,18 +48,37 @@ const emailRequestSchema = z.object({
 });
 
 const handler = async (req: Request): Promise<Response> => {
-  console.log("send-confirmation function invoked");
+  logStep("Function invoked");
 
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Rate limiting by IP
+  const clientIP = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
+  const rateLimitResult = checkRateLimit(`confirmation:${clientIP}`);
+  
+  if (!rateLimitResult.allowed) {
+    logStep("Rate limit exceeded", { clientIP });
+    return new Response(
+      JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+      { 
+        status: 429, 
+        headers: { 
+          ...corsHeaders, 
+          "Content-Type": "application/json",
+          "Retry-After": String(rateLimitResult.retryAfter)
+        } 
+      }
+    );
+  }
+
   try {
     // 1. Check for authentication
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      console.error("No authorization header provided");
+      logStep("No authorization header");
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         {
@@ -52,7 +98,7 @@ const handler = async (req: Request): Promise<Response> => {
     // 3. Verify the user is authenticated
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      console.error("User authentication failed:", userError);
+      logStep("User authentication failed", { error: userError });
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         {
@@ -62,14 +108,14 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log(`Authenticated user: ${user.id}`);
+    logStep("User authenticated", { userId: user.id });
 
     // 4. Parse and validate input
     const rawBody = await req.json();
     const validationResult = emailRequestSchema.safeParse(rawBody);
     
     if (!validationResult.success) {
-      console.error("Validation failed:", validationResult.error.errors);
+      logStep("Validation failed", { errors: validationResult.error.errors });
       return new Response(
         JSON.stringify({ 
           error: "Invalid input", 
@@ -92,7 +138,7 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (requestError || !request) {
-      console.error("Request not found:", requestError);
+      logStep("Request not found", { requestId });
       return new Response(
         JSON.stringify({ error: "Request not found" }),
         {
@@ -103,7 +149,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (request.user_id !== user.id) {
-      console.error("User does not own this request");
+      logStep("User does not own request", { userId: user.id, requestUserId: request.user_id });
       return new Response(
         JSON.stringify({ error: "Forbidden" }),
         {
@@ -113,7 +159,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log(`Sending confirmation email to ${to} for request ${requestId}`);
+    logStep("Sending confirmation email", { to, requestId });
 
     // 6. Send the email
     const emailResponse = await resend.emails.send({
@@ -191,16 +237,17 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    logStep("Email sent successfully");
 
     return new Response(JSON.stringify(emailResponse), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
-  } catch (error: any) {
-    console.error("Error in send-confirmation function:", error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

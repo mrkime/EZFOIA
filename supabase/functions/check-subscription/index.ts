@@ -7,6 +7,28 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 30;
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+const checkRateLimit = (identifier: string): { allowed: boolean; retryAfter?: number } => {
+  const now = Date.now();
+  const record = rateLimitMap.get(identifier);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true };
+  }
+  
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return { allowed: false, retryAfter: Math.ceil((record.resetTime - now) / 1000) };
+  }
+  
+  record.count++;
+  return { allowed: true };
+};
+
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
@@ -15,6 +37,25 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Rate limiting by IP
+  const clientIP = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
+  const rateLimitResult = checkRateLimit(`subscription:${clientIP}`);
+  
+  if (!rateLimitResult.allowed) {
+    logStep("Rate limit exceeded", { clientIP });
+    return new Response(
+      JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+      { 
+        status: 429, 
+        headers: { 
+          ...corsHeaders, 
+          "Content-Type": "application/json",
+          "Retry-After": String(rateLimitResult.retryAfter)
+        } 
+      }
+    );
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
