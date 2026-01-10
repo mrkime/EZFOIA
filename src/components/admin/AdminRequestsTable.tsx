@@ -68,6 +68,8 @@ const AdminRequestsTable = () => {
   }, []);
 
   const handleStatusChange = async (requestId: string, newStatus: string) => {
+    const oldStatus = requests.find(r => r.id === requestId)?.status;
+    
     try {
       const { error } = await supabase
         .from('foia_requests')
@@ -84,9 +86,22 @@ const AdminRequestsTable = () => {
         )
       );
 
+      // Send notification to user about status change
+      try {
+        const { error: notifyError } = await supabase.functions.invoke('notify-status-change', {
+          body: { requestId, newStatus, oldStatus },
+        });
+        
+        if (notifyError) {
+          logger.error('Failed to send notification:', notifyError);
+        }
+      } catch (notifyErr) {
+        logger.error('Notification error:', notifyErr);
+      }
+
       toast({
         title: 'Status Updated',
-        description: `Request status changed to ${newStatus}`,
+        description: `Request status changed to ${newStatus}. User has been notified.`,
       });
     } catch (error) {
       logger.error('Error updating status:', error);
