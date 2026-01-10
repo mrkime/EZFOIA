@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -84,27 +85,13 @@ const Contact = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 bg-hero-gradient relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
-          <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
-        </div>
-        
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <span className="text-primary font-semibold text-sm uppercase tracking-wider">Contact</span>
-            <h1 className="font-display text-4xl md:text-6xl font-bold mt-4 mb-6">
-              Get in{' '}
-              <span className="text-gradient">Touch</span>
-            </h1>
-            <p className="text-muted-foreground text-lg md:text-xl">
-              Have questions about your FOIA request or need help getting started? 
-              Our team of experts is here to help.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        badge="Contact"
+        badgeIcon={Mail}
+        title="Get in"
+        titleHighlight="Touch"
+        description="Have questions about your FOIA request or need help getting started? Our team of experts is here to help."
+      />
 
       {/* Contact Methods */}
       <section className="py-16">

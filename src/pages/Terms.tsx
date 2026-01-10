@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PageHeader from "@/components/PageHeader";
 import { Scale } from "lucide-react";
 
 const Terms = () => {
@@ -7,13 +8,15 @@ const Terms = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <section className="pt-32 pb-16 px-6">
+      <PageHeader
+        badge="Legal"
+        badgeIcon={Scale}
+        title="Terms of"
+        titleHighlight="Service"
+      />
+
+      <section className="pb-16 px-6">
         <div className="container mx-auto max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
-            <Scale className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Legal</span>
-          </div>
-          <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">Terms of Service</h1>
           <p className="text-muted-foreground mb-12">Last updated: January 10, 2026</p>
 
           <div className="prose prose-invert max-w-none space-y-8">

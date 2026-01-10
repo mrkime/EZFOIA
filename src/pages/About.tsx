@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Shield, Target, Heart, Award, Users, Globe } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
+import { Shield, Target, Heart, Users, Globe, Info } from "lucide-react";
 
 const values = [
   {
@@ -50,27 +51,13 @@ const About = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 bg-hero-gradient relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
-          <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
-        </div>
-        
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <span className="text-primary font-semibold text-sm uppercase tracking-wider">About Us</span>
-            <h1 className="font-display text-4xl md:text-6xl font-bold mt-4 mb-6">
-              Democratizing Access to{' '}
-              <span className="text-gradient">Public Records</span>
-            </h1>
-            <p className="text-muted-foreground text-lg md:text-xl">
-              EZFOIA was founded on a simple belief: everyone deserves easy access to government information. 
-              We're on a mission to make the Freedom of Information process accessible, affordable, and efficient.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        badge="About Us"
+        badgeIcon={Info}
+        title="Democratizing Access to"
+        titleHighlight="Public Records"
+        description="EZFOIA was founded on a simple belief: everyone deserves easy access to government information. We're on a mission to make the Freedom of Information process accessible, affordable, and efficient."
+      />
 
       {/* Our Story */}
       <section className="py-24">

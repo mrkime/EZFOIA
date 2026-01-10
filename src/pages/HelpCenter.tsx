@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PageHeader from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,28 +86,23 @@ const HelpCenter = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      {/* Hero */}
-      <section className="pt-32 pb-16 px-6 bg-muted/30">
-        <div className="container mx-auto max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
-            <HelpCircle className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Help Center</span>
-          </div>
-          <h1 className="font-display text-4xl md:text-5xl font-bold mb-6">
-            How can we help you?
-          </h1>
-          <div className="relative max-w-xl mx-auto">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search for articles..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 py-6 text-lg bg-background"
-            />
-          </div>
+      <PageHeader
+        badge="Help Center"
+        badgeIcon={HelpCircle}
+        title="How can we"
+        titleHighlight="help you?"
+      >
+        <div className="relative max-w-xl mx-auto">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search for articles..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-12 py-6 text-lg bg-background"
+          />
         </div>
-      </section>
+      </PageHeader>
 
       {/* Search Results */}
       {searchQuery.trim() && (
