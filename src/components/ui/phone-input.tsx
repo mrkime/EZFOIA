@@ -42,12 +42,52 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
     // Extract digits from the stored E.164 value
     const digits = extractDigits(value);
     const displayValue = formatPhoneDisplay(digits);
+    
+    // Track cursor position for better UX
+    const inputRef = React.useRef<HTMLInputElement>(null);
+    
+    // Merge refs
+    React.useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const input = e.target.value;
-      // Extract only digits from input
-      const newDigits = input.replace(/\D/g, "").slice(0, 10);
-      // Store in E.164 format
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      const input = inputRef.current;
+      if (!input) return;
+      
+      // Allow: backspace, delete, tab, escape, enter, arrow keys
+      if (
+        e.key === "Backspace" ||
+        e.key === "Delete" ||
+        e.key === "Tab" ||
+        e.key === "Escape" ||
+        e.key === "Enter" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight" ||
+        e.key === "ArrowUp" ||
+        e.key === "ArrowDown"
+      ) {
+        if (e.key === "Backspace" || e.key === "Delete") {
+          e.preventDefault();
+          // Remove last digit
+          const newDigits = digits.slice(0, -1);
+          onChange(toE164(newDigits));
+        }
+        return;
+      }
+      
+      // Only allow digits
+      if (!/^\d$/.test(e.key)) {
+        e.preventDefault();
+        return;
+      }
+      
+      // Prevent if we're at max length
+      if (digits.length >= 10) {
+        e.preventDefault();
+        return;
+      }
+      
+      e.preventDefault();
+      const newDigits = digits + e.key;
       onChange(toE164(newDigits));
     };
 
@@ -57,12 +97,13 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
           +1
         </span>
         <Input
-          ref={ref}
+          ref={inputRef}
           type="tel"
           inputMode="numeric"
           className={cn("pl-10", className)}
           value={displayValue}
-          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onChange={() => {}} // Controlled via onKeyDown
           placeholder="(555) 123-4567"
           {...props}
         />
