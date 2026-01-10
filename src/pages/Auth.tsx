@@ -248,7 +248,11 @@ const Auth = () => {
           <div className="mt-6 text-center">
             <button
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                signInForm.reset();
+                signUpForm.reset();
+              }}
               className="text-primary hover:underline"
             >
               {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
