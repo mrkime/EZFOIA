@@ -198,32 +198,38 @@ const Pricing = ({ showHeader = true, className, initialBillingPeriod = "monthly
             </p>
 
             {/* Billing Toggle */}
-            <div className="flex items-center justify-center gap-4">
-              <button
-                onClick={() => setBillingPeriod("monthly")}
-                className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                  billingPeriod === "monthly" 
-                    ? "bg-primary text-primary-foreground" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setBillingPeriod("annual")}
-                className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-medium transition-all relative",
-                  billingPeriod === "annual" 
-                    ? "bg-primary text-primary-foreground" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                Annual
-                <Badge className="absolute -top-3 -right-10 bg-emerald-500 text-white text-[10px] px-1.5 py-0.5">
+            <div className="flex items-center justify-center">
+              <div className="relative bg-muted/50 rounded-full p-1 flex items-center">
+                {/* Sticker Badge */}
+                <Badge 
+                  className="absolute -top-3 -right-3 bg-emerald-500 text-white text-[10px] px-2 py-0.5 shadow-lg rotate-12 z-20 border-0"
+                >
                   Save 20%
                 </Badge>
-              </button>
+                
+                <button
+                  onClick={() => setBillingPeriod("monthly")}
+                  className={cn(
+                    "relative z-10 px-5 py-2 rounded-full text-sm font-medium transition-all",
+                    billingPeriod === "monthly" 
+                      ? "bg-primary text-primary-foreground" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBillingPeriod("annual")}
+                  className={cn(
+                    "relative z-10 px-5 py-2 rounded-full text-sm font-medium transition-all",
+                    billingPeriod === "annual" 
+                      ? "bg-primary text-primary-foreground" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Annual
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
