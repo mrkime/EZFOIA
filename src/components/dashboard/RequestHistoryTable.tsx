@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,9 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Clock, CheckCircle, AlertCircle, Loader2, Eye } from "lucide-react";
+import { FileText, Clock, CheckCircle, AlertCircle, Loader2, Eye, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import RequestFilters from "./RequestFilters";
+import RequestFormModal from "@/components/RequestFormModal";
+import { toast } from "sonner";
 
 interface FoiaRequest {
   id: string;
@@ -69,15 +73,78 @@ const getStatusConfig = (status: string) => {
 
 const RequestHistoryTable = ({ requests, loading }: RequestHistoryTableProps) => {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const handleViewDetails = (requestId: string) => {
     navigate(`/dashboard/request/${requestId}`);
   };
 
+  const filteredRequests = useMemo(() => {
+    return requests.filter((request) => {
+      const matchesSearch =
+        request.agency_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.record_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.record_description.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        request.status.toLowerCase() === statusFilter.toLowerCase() ||
+        (statusFilter === "in_progress" && request.status.toLowerCase() === "processing");
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [requests, searchQuery, statusFilter]);
+
+  const hasActiveFilters = searchQuery !== "" || statusFilter !== "all";
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("all");
+  };
+
+  const handleExport = () => {
+    if (filteredRequests.length === 0) {
+      toast.error("No requests to export");
+      return;
+    }
+
+    const csvHeaders = ["Agency", "Type", "Record Type", "Description", "Status", "Date Filed", "Last Updated"];
+    const csvRows = filteredRequests.map((r) => [
+      r.agency_name,
+      r.agency_type,
+      r.record_type,
+      `"${r.record_description.replace(/"/g, '""')}"`,
+      r.status,
+      format(new Date(r.created_at), "yyyy-MM-dd"),
+      format(new Date(r.updated_at), "yyyy-MM-dd"),
+    ]);
+
+    const csvContent = [csvHeaders.join(","), ...csvRows.map((row) => row.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `foia-requests-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Requests exported successfully");
+  };
+
   return (
     <Card className="bg-card-gradient border-border">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="font-display">Request History</CardTitle>
+        <RequestFormModal>
+          <Button
+            variant="hero"
+            size="sm"
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            New Request
+          </Button>
+        </RequestFormModal>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -92,12 +159,33 @@ const RequestHistoryTable = ({ requests, loading }: RequestHistoryTableProps) =>
             <p className="text-muted-foreground mb-4">
               You haven't submitted any FOIA requests yet.
             </p>
-            <Button variant="hero" onClick={() => navigate("/")}>
-              Submit Your First Request
-            </Button>
+            <RequestFormModal>
+              <Button variant="hero">
+                Submit Your First Request
+              </Button>
+            </RequestFormModal>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            <RequestFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              statusFilter={statusFilter}
+              onStatusChange={setStatusFilter}
+              onExport={handleExport}
+              onClearFilters={handleClearFilters}
+              hasActiveFilters={hasActiveFilters}
+            />
+            
+            {filteredRequests.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No requests match your filters.</p>
+                <Button variant="ghost" onClick={handleClearFilters} className="mt-2">
+                  Clear Filters
+                </Button>
+              </div>
+            ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-border hover:bg-transparent">
@@ -110,7 +198,7 @@ const RequestHistoryTable = ({ requests, loading }: RequestHistoryTableProps) =>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {requests.map(request => {
+                {filteredRequests.map(request => {
                   const statusConfig = getStatusConfig(request.status);
                   const StatusIcon = statusConfig.icon;
                   
@@ -161,7 +249,10 @@ const RequestHistoryTable = ({ requests, loading }: RequestHistoryTableProps) =>
               </TableBody>
             </Table>
           </div>
+            )}
+          </>
         )}
+
       </CardContent>
     </Card>
   );

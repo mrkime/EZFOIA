@@ -12,6 +12,9 @@ import { STRIPE_PRICES } from "@/lib/stripe-config";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import UpgradePlanModal from "@/components/UpgradePlanModal";
+import NotificationPreferences from "./NotificationPreferences";
+import SecuritySettings from "./SecuritySettings";
+import ActivityLog from "./ActivityLog";
 import { logger } from "@/lib/logger";
 import {
   User,
@@ -358,6 +361,15 @@ const AccountSettings = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Notification Preferences */}
+      <NotificationPreferences />
+
+      {/* Security Settings */}
+      <SecuritySettings />
+
+      {/* Activity Log */}
+      <ActivityLog />
     </div>
   );
 };
