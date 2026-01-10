@@ -1,7 +1,22 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight } from "lucide-react";
+import { Check, ArrowRight, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { STRIPE_PRICES, PlanKey } from "@/lib/stripe-config";
+import { toast } from "sonner";
 
-const plans = [
+const plans: {
+  name: string;
+  price: string;
+  period: string;
+  description: string;
+  features: string[];
+  cta: string;
+  featured: boolean;
+  planKey: PlanKey;
+}[] = [
   {
     name: "Single Request",
     price: "$75",
@@ -16,6 +31,7 @@ const plans = [
     ],
     cta: "Submit Request",
     featured: false,
+    planKey: "single",
   },
   {
     name: "Professional",
@@ -32,6 +48,7 @@ const plans = [
     ],
     cta: "Start Subscription",
     featured: true,
+    planKey: "professional",
   },
   {
     name: "Enterprise",
@@ -47,12 +64,46 @@ const plans = [
       "Phone support",
       "Filing fees billed separately",
     ],
-    cta: "Contact Sales",
+    cta: "Start Subscription",
     featured: false,
+    planKey: "enterprise",
   },
 ];
 
 const Pricing = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
+
+  const handleCheckout = async (planKey: PlanKey) => {
+    if (!user) {
+      toast.info("Please sign in to continue with your purchase");
+      navigate("/auth");
+      return;
+    }
+
+    setLoadingPlan(planKey);
+    try {
+      const priceConfig = STRIPE_PRICES[planKey];
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { 
+          priceId: priceConfig.priceId, 
+          mode: priceConfig.mode 
+        },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error("Failed to start checkout. Please try again.");
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
   return (
     <section id="pricing" className="py-24 bg-background">
       <div className="container mx-auto px-6">
@@ -108,9 +159,17 @@ const Pricing = () => {
                 variant={plan.featured ? "hero" : "heroOutline"}
                 size="lg"
                 className="w-full"
+                onClick={() => handleCheckout(plan.planKey)}
+                disabled={loadingPlan !== null}
               >
-                {plan.cta}
-                <ArrowRight className="w-4 h-4" />
+                {loadingPlan === plan.planKey ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    {plan.cta}
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </Button>
             </div>
           ))}
