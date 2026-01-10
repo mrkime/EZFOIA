@@ -10,6 +10,33 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 30;
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+const checkRateLimit = (identifier: string): { allowed: boolean; retryAfter?: number } => {
+  const now = Date.now();
+  const record = rateLimitMap.get(identifier);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true };
+  }
+  
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return { allowed: false, retryAfter: Math.ceil((record.resetTime - now) / 1000) };
+  }
+  
+  record.count++;
+  return { allowed: true };
+};
+
+const logStep = (step: string, details?: Record<string, unknown>) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[NOTIFY-STATUS-CHANGE] ${step}${detailsStr}`);
+};
+
 const getStatusLabel = (status: string): string => {
   switch (status.toLowerCase()) {
     case "pending":
@@ -44,11 +71,75 @@ const getStatusColor = (status: string): string => {
   }
 };
 
+const sendTwilioSMS = async (to: string, message: string): Promise<boolean> => {
+  const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+  const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+  const fromNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
+  
+  if (!accountSid || !authToken || !fromNumber) {
+    logStep("Twilio not configured, skipping SMS");
+    return false;
+  }
+  
+  // Format phone number - ensure it has country code
+  const formattedTo = to.startsWith('+') ? to : `+1${to.replace(/\D/g, '')}`;
+  
+  try {
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${btoa(`${accountSid}:${authToken}`)}`,
+        },
+        body: new URLSearchParams({
+          To: formattedTo,
+          From: fromNumber,
+          Body: message,
+        }),
+      }
+    );
+    
+    if (!response.ok) {
+      const errorData = await response.text();
+      logStep("Twilio SMS failed", { status: response.status, error: errorData });
+      return false;
+    }
+    
+    const data = await response.json();
+    logStep("Twilio SMS sent successfully", { sid: data.sid });
+    return true;
+  } catch (error) {
+    logStep("Twilio SMS error", { error: error instanceof Error ? error.message : String(error) });
+    return false;
+  }
+};
+
 const handler = async (req: Request): Promise<Response> => {
-  console.log("notify-status-change function invoked");
+  logStep("Function invoked");
 
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Rate limiting by IP
+  const clientIP = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
+  const rateLimitResult = checkRateLimit(`notify-status:${clientIP}`);
+  
+  if (!rateLimitResult.allowed) {
+    logStep("Rate limit exceeded", { clientIP });
+    return new Response(
+      JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+      { 
+        status: 429, 
+        headers: { 
+          ...corsHeaders, 
+          "Content-Type": "application/json",
+          "Retry-After": String(rateLimitResult.retryAfter)
+        } 
+      }
+    );
   }
 
   try {
@@ -66,15 +157,17 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Get the request details
+    logStep("Processing status change", { requestId, oldStatus, newStatus });
+
+    // Get the request details with profile
     const { data: request, error: requestError } = await supabaseAdmin
       .from("foia_requests")
-      .select("*, profiles:user_id(full_name)")
+      .select("*, profiles:user_id(full_name, phone, sms_notifications)")
       .eq("id", requestId)
       .single();
 
     if (requestError || !request) {
-      console.error("Request not found:", requestError);
+      logStep("Request not found", { error: requestError });
       return new Response(
         JSON.stringify({ error: "Request not found" }),
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -87,7 +180,7 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     if (userError || !userData.user) {
-      console.error("User not found:", userError);
+      logStep("User not found", { error: userError });
       return new Response(
         JSON.stringify({ error: "User not found" }),
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -96,7 +189,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const userEmail = userData.user.email;
     if (!userEmail) {
-      console.error("User email not found");
+      logStep("User email not found");
       return new Response(
         JSON.stringify({ error: "User email not found" }),
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -107,7 +200,18 @@ const handler = async (req: Request): Promise<Response> => {
     const statusLabel = getStatusLabel(newStatus);
     const statusColor = getStatusColor(newStatus);
 
-    console.log(`Sending status update email to ${userEmail} for request ${requestId}`);
+    logStep("Sending notifications", { email: userEmail, hasPhone: !!request.profiles?.phone });
+
+    // Send SMS notification if user has phone and SMS enabled
+    let smsSent = false;
+    if (request.profiles?.phone && request.profiles?.sms_notifications) {
+      const smsMessage = `EZFOIA: Your FOIA request for ${request.agency_name} is now "${statusLabel}". ${
+        newStatus.toLowerCase() === "completed" 
+          ? "Your documents are ready for download!" 
+          : "Log in to view details."
+      }`;
+      smsSent = await sendTwilioSMS(request.profiles.phone, smsMessage);
+    }
 
     // Send notification email
     const emailResponse = await resend.emails.send({
@@ -188,16 +292,17 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    logStep("Notifications sent", { emailResponse, smsSent });
 
-    return new Response(JSON.stringify({ success: true, emailResponse }), {
+    return new Response(JSON.stringify({ success: true, emailResponse, smsSent }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
-  } catch (error: any) {
-    console.error("Error in notify-status-change function:", error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }

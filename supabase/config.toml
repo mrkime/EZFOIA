@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.foia-chat]
 verify_jwt = false
+
+[functions.notify-status-change]
+verify_jwt = false
