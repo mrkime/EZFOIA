@@ -151,7 +151,11 @@ const HowItWorks = () => {
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
   return (
-    <section id="how-it-works" className="py-24 bg-background overflow-hidden">
+    <section id="how-it-works" className="py-24 bg-background dark:bg-background overflow-hidden relative">
+      {/* Section dividers for light mode */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      
       <div className="container mx-auto px-6" ref={sectionRef}>
         {/* Header with staggered animation */}
         <motion.div

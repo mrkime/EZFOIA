@@ -7,26 +7,29 @@ import RequestFormModal from "./RequestFormModal";
 const AnimatedGrid = () => {
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {/* Base grid pattern */}
+      {/* Subtle background tint for light mode contrast */}
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.04] via-transparent to-primary/[0.02] dark:from-primary/[0.05] dark:to-transparent" />
+      
+      {/* Base grid pattern - stronger in light mode */}
       <div 
-        className="absolute inset-0 opacity-[0.15]"
+        className="absolute inset-0 opacity-25 dark:opacity-[0.15]"
         style={{
           backgroundImage: `
-            linear-gradient(to right, hsl(var(--primary) / 0.3) 1px, transparent 1px),
-            linear-gradient(to bottom, hsl(var(--primary) / 0.3) 1px, transparent 1px)
+            linear-gradient(to right, hsl(var(--primary) / 0.5) 1px, transparent 1px),
+            linear-gradient(to bottom, hsl(var(--primary) / 0.5) 1px, transparent 1px)
           `,
           backgroundSize: '60px 60px',
         }}
       />
       
-      {/* Animated glow lines - horizontal */}
+      {/* Animated glow lines - horizontal - stronger for light mode */}
       {[...Array(4)].map((_, i) => (
         <motion.div
           key={`h-${i}`}
-          className="absolute h-[1px] left-0 right-0"
+          className="absolute h-[2px] dark:h-[1px] left-0 right-0"
           style={{ 
             top: `${20 + i * 20}%`,
-            background: 'linear-gradient(90deg, transparent, hsl(var(--primary) / 0.6), transparent)',
+            background: 'linear-gradient(90deg, transparent, hsl(var(--primary) / 0.8), transparent)',
           }}
           initial={{ x: '-100%', opacity: 0 }}
           animate={{ 
@@ -42,14 +45,14 @@ const AnimatedGrid = () => {
         />
       ))}
       
-      {/* Animated glow lines - vertical */}
+      {/* Animated glow lines - vertical - stronger for light mode */}
       {[...Array(3)].map((_, i) => (
         <motion.div
           key={`v-${i}`}
-          className="absolute w-[1px] top-0 bottom-0"
+          className="absolute w-[2px] dark:w-[1px] top-0 bottom-0"
           style={{ 
             left: `${25 + i * 25}%`,
-            background: 'linear-gradient(180deg, transparent, hsl(var(--primary) / 0.5), transparent)',
+            background: 'linear-gradient(180deg, transparent, hsl(var(--primary) / 0.7), transparent)',
           }}
           initial={{ y: '-100%', opacity: 0 }}
           animate={{ 
@@ -65,7 +68,7 @@ const AnimatedGrid = () => {
         />
       ))}
       
-      {/* Grid intersection glows */}
+      {/* Grid intersection glows - stronger in light mode */}
       {[...Array(6)].map((_, i) => (
         <motion.div
           key={`glow-${i}`}
@@ -73,11 +76,11 @@ const AnimatedGrid = () => {
           style={{
             left: `${15 + (i % 3) * 30}%`,
             top: `${20 + Math.floor(i / 3) * 40}%`,
-            background: 'radial-gradient(circle, hsl(var(--primary) / 0.15) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, hsl(var(--primary) / 0.25) 0%, transparent 70%)',
           }}
           animate={{
             scale: [1, 1.5, 1],
-            opacity: [0.3, 0.6, 0.3],
+            opacity: [0.4, 0.7, 0.4],
           }}
           transition={{
             duration: 4 + i,
@@ -88,9 +91,9 @@ const AnimatedGrid = () => {
         />
       ))}
       
-      {/* Corner accent gradients */}
-      <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-to-br from-primary/5 to-transparent" />
-      <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-tl from-primary/5 to-transparent" />
+      {/* Corner accent gradients - enhanced for light mode */}
+      <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-to-br from-primary/10 dark:from-primary/5 to-transparent" />
+      <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-tl from-primary/10 dark:from-primary/5 to-transparent" />
     </div>
   );
 };
