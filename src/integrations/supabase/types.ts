@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           category: string
@@ -175,25 +202,31 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          email_notifications: boolean | null
           full_name: string | null
           id: string
           phone: string | null
+          sms_notifications: boolean | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          email_notifications?: boolean | null
           full_name?: string | null
           id?: string
           phone?: string | null
+          sms_notifications?: boolean | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          email_notifications?: boolean | null
           full_name?: string | null
           id?: string
           phone?: string | null
+          sms_notifications?: boolean | null
           updated_at?: string
           user_id?: string
         }
