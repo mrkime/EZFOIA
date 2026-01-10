@@ -131,18 +131,6 @@ const Hero = () => {
           <motion.div 
             className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-8 animate-fade-in relative overflow-hidden"
             style={{ y: badgeY }}
-            animate={{
-              boxShadow: [
-                '0 0 0 0 hsl(var(--primary) / 0)',
-                '0 0 8px 2px hsl(var(--primary) / 0.15)',
-                '0 0 0 0 hsl(var(--primary) / 0)',
-              ],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
           >
             {/* Subtle shimmer effect */}
             <motion.div
