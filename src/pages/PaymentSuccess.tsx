@@ -1,16 +1,32 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, ArrowRight, FileText, Bell } from "lucide-react";
+import { CheckCircle, ArrowRight, FileText, Bell, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { PENDING_REQUEST_KEY } from "@/components/RequestFormModal";
+import { toast } from "sonner";
+
+const recordTypeLabels: Record<string, string> = {
+  emails: "Emails & Correspondence",
+  contracts: "Contracts & Agreements",
+  "meeting-minutes": "Meeting Minutes",
+  financial: "Financial Records",
+  personnel: "Personnel Records",
+  policies: "Policies & Procedures",
+  "incident-reports": "Incident Reports",
+  other: "Other Documents",
+};
 
 const PaymentSuccess = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const paymentType = searchParams.get("type") || "payment";
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+  const [requestSubmitted, setRequestSubmitted] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -18,11 +34,70 @@ const PaymentSuccess = () => {
     }
   }, [user, loading, navigate]);
 
+  // Auto-submit pending request after payment
+  useEffect(() => {
+    const submitPendingRequest = async () => {
+      if (!user || submittingRequest || requestSubmitted) return;
+
+      const pendingData = localStorage.getItem(PENDING_REQUEST_KEY);
+      if (!pendingData) return;
+
+      setSubmittingRequest(true);
+
+      try {
+        const data = JSON.parse(pendingData);
+        
+        const { data: requestData, error: insertError } = await supabase
+          .from("foia_requests")
+          .insert({
+            user_id: user.id,
+            agency_name: data.agencyName,
+            agency_type: data.agencyType,
+            record_type: data.recordType,
+            record_description: data.recordDescription,
+          })
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+
+        console.log("Pending FOIA request created:", requestData.id);
+
+        // Send confirmation email
+        await supabase.functions.invoke("send-confirmation", {
+          body: {
+            to: user.email,
+            name: user.user_metadata?.full_name || "Valued Customer",
+            agencyName: data.agencyName,
+            recordType: recordTypeLabels[data.recordType] || data.recordType,
+            requestId: requestData.id,
+          },
+        }).catch(console.error);
+
+        // Clear pending request
+        localStorage.removeItem(PENDING_REQUEST_KEY);
+        setRequestSubmitted(true);
+        
+        toast.success("Your FOIA request has been submitted!");
+      } catch (error: any) {
+        console.error("Error submitting pending request:", error);
+        toast.error("Failed to submit your request. Please try from the dashboard.");
+      } finally {
+        setSubmittingRequest(false);
+      }
+    };
+
+    if (user && !loading) {
+      submitPendingRequest();
+    }
+  }, [user, loading, submittingRequest, requestSubmitted]);
+
   if (loading || !user) {
     return null;
   }
 
   const isSubscription = paymentType === "subscription";
+  const hasPendingRequest = !!localStorage.getItem(PENDING_REQUEST_KEY);
 
   return (
     <div className="min-h-screen bg-background">
@@ -33,15 +108,23 @@ const PaymentSuccess = () => {
           {/* Success Icon */}
           <div className="mb-8">
             <div className="w-20 h-20 mx-auto bg-primary/20 rounded-full flex items-center justify-center mb-6">
-              <CheckCircle className="w-10 h-10 text-primary" />
+              {submittingRequest ? (
+                <Loader2 className="w-10 h-10 text-primary animate-spin" />
+              ) : (
+                <CheckCircle className="w-10 h-10 text-primary" />
+              )}
             </div>
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-4">
-              Payment Successful!
+              {submittingRequest ? "Submitting Your Request..." : "Payment Successful!"}
             </h1>
             <p className="text-muted-foreground text-lg">
-              {isSubscription 
-                ? "Welcome to your new subscription! You now have access to all plan features."
-                : "Your FOIA request payment has been processed successfully."}
+              {submittingRequest 
+                ? "We're processing your FOIA request now."
+                : requestSubmitted
+                  ? "Your FOIA request has been submitted and is being processed."
+                  : isSubscription 
+                    ? "Welcome to your new subscription! You now have access to all plan features."
+                    : "Your payment has been processed successfully."}
             </p>
           </div>
 
@@ -60,7 +143,7 @@ const PaymentSuccess = () => {
                   <div>
                     <h3 className="font-semibold mb-1">Confirmation Email</h3>
                     <p className="text-muted-foreground text-sm">
-                      You'll receive a confirmation email with your receipt and details.
+                      You'll receive a confirmation email with your receipt and request details.
                     </p>
                   </div>
                 </div>
@@ -70,13 +153,9 @@ const PaymentSuccess = () => {
                     <span className="text-primary font-bold">2</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1">
-                      {isSubscription ? "Start Submitting Requests" : "Request Processing"}
-                    </h3>
+                    <h3 className="font-semibold mb-1">Request Processing</h3>
                     <p className="text-muted-foreground text-sm">
-                      {isSubscription 
-                        ? "You can now submit FOIA requests included in your plan."
-                        : "Our team will file your FOIA request with the appropriate agency."}
+                      Our team will file your FOIA request with the appropriate agency.
                     </p>
                   </div>
                 </div>
@@ -116,7 +195,7 @@ const PaymentSuccess = () => {
               onClick={() => navigate("/")}
             >
               <Bell className="w-4 h-4 mr-2" />
-              Submit a Request
+              Submit Another Request
             </Button>
           </div>
 

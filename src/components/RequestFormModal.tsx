@@ -31,9 +31,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { STRIPE_PRICES } from "@/lib/stripe-config";
-import { Loader2, CheckCircle, ArrowRight, LogIn, Crown } from "lucide-react";
+import { STRIPE_PRICES, PlanKey } from "@/lib/stripe-config";
+import { Loader2, CheckCircle, ArrowRight, LogIn, Crown, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+export const PENDING_REQUEST_KEY = "pending_foia_request";
 
 const requestSchema = z.object({
   agencyName: z
@@ -96,14 +98,55 @@ const getRequestLimit = (productId: string | null): number => {
   return 0;
 };
 
+interface Plan {
+  name: string;
+  price: string;
+  period: string;
+  description: string;
+  features: string[];
+  planKey: PlanKey;
+  featured?: boolean;
+}
+
+const plans: Plan[] = [
+  {
+    name: "Single Request",
+    price: "$75",
+    period: "one-time",
+    description: "Perfect for one-time FOIA requests",
+    features: ["One FOIA request filed", "Real-time SMS tracking", "AI document search"],
+    planKey: "single",
+  },
+  {
+    name: "Professional",
+    price: "$200",
+    period: "per month",
+    description: "For regular research and investigations",
+    features: ["5 FOIA requests per month", "Priority processing", "AI document search & analysis"],
+    planKey: "professional",
+    featured: true,
+  },
+  {
+    name: "Enterprise",
+    price: "$500",
+    period: "per month",
+    description: "For newsrooms and heavy users",
+    features: ["Unlimited FOIA requests", "Dedicated account manager", "API access"],
+    planKey: "enterprise",
+  },
+];
+
+type ModalStep = "form" | "plan-selection" | "success";
+
 interface RequestFormModalProps {
   children: React.ReactNode;
 }
 
 const RequestFormModal = ({ children }: RequestFormModalProps) => {
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<ModalStep>("form");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [subLoading, setSubLoading] = useState(true);
   const [requestCount, setRequestCount] = useState(0);
@@ -165,31 +208,12 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
     return String(Math.max(0, limit - requestCount));
   };
 
-  const onSubmit = async (data: RequestFormData) => {
-    if (!user) {
-      toast({
-        title: "Please sign in",
-        description: "You need to be signed in to submit a FOIA request.",
-        variant: "destructive",
-      });
-      setOpen(false);
-      navigate("/auth");
-      return;
-    }
-
-    if (!canSubmitRequest()) {
-      toast({
-        title: "Subscription Required",
-        description: "Please subscribe to a plan to submit FOIA requests.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const submitRequest = async (data: RequestFormData) => {
+    if (!user) return;
+    
     setIsSubmitting(true);
     
     try {
-      // Insert the request into the database
       const { data: requestData, error: insertError } = await supabase
         .from("foia_requests")
         .insert({
@@ -202,14 +226,12 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
         .select()
         .single();
 
-      if (insertError) {
-        throw insertError;
-      }
+      if (insertError) throw insertError;
 
       console.log("FOIA request created:", requestData.id);
 
       // Send confirmation email
-      const { error: emailError } = await supabase.functions.invoke("send-confirmation", {
+      await supabase.functions.invoke("send-confirmation", {
         body: {
           to: user.email,
           name: user.user_metadata?.full_name || "Valued Customer",
@@ -217,25 +239,19 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
           recordType: recordTypeLabels[data.recordType] || data.recordType,
           requestId: requestData.id,
         },
-      });
-
-      if (emailError) {
-        console.error("Email error:", emailError);
-        // Don't fail the whole request if email fails
-      }
+      }).catch(console.error);
 
       setIsSubmitting(false);
-      setIsSuccess(true);
+      setStep("success");
       
       toast({
         title: "Request Submitted!",
         description: "Check your email for confirmation details.",
       });
 
-      // Reset after showing success
       setTimeout(() => {
         setOpen(false);
-        setIsSuccess(false);
+        setStep("form");
         form.reset();
       }, 2500);
     } catch (error: any) {
@@ -249,11 +265,63 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
     }
   };
 
+  const onSubmit = async (data: RequestFormData) => {
+    if (!user) {
+      toast({
+        title: "Please sign in",
+        description: "You need to be signed in to submit a FOIA request.",
+        variant: "destructive",
+      });
+      setOpen(false);
+      navigate("/auth");
+      return;
+    }
+
+    // If user can submit (has valid subscription with capacity), submit directly
+    if (canSubmitRequest()) {
+      await submitRequest(data);
+      return;
+    }
+
+    // Otherwise, show plan selection - store form data for after payment
+    localStorage.setItem(PENDING_REQUEST_KEY, JSON.stringify(data));
+    setStep("plan-selection");
+  };
+
+  const handleCheckout = async (planKey: PlanKey) => {
+    setLoadingPlan(planKey);
+    try {
+      const priceConfig = STRIPE_PRICES[planKey];
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: {
+          priceId: priceConfig.priceId,
+          mode: priceConfig.mode,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        setOpen(false);
+        setStep("form");
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast({
+        title: "Checkout Failed",
+        description: "Failed to start checkout. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
   const handleOpenChange = (newOpen: boolean) => {
-    if (!isSubmitting) {
+    if (!isSubmitting && !loadingPlan) {
       setOpen(newOpen);
       if (!newOpen) {
-        setIsSuccess(false);
+        setStep("form");
         form.reset();
       }
     }
@@ -295,43 +363,81 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
     );
   }
 
-  // Show subscription required prompt if user doesn't have an active subscription
-  if (user && open && !subLoading && !canSubmitRequest()) {
-    const hasSubscription = subscription?.subscribed;
+  // Plan selection step
+  if (step === "plan-selection") {
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent className="sm:max-w-[450px] bg-card border-border">
-          <div className="py-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-6">
-              <Crown className="w-8 h-8 text-amber-400" />
-            </div>
-            <h3 className="font-display text-2xl font-bold mb-2">
-              {hasSubscription ? "Request Limit Reached" : "Subscription Required"}
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              {hasSubscription 
-                ? "You've used all your requests for this billing period. Upgrade your plan for more requests."
-                : "Subscribe to a plan to start submitting FOIA requests. We'll handle everything from filing to document delivery."
-              }
-            </p>
-            <div className="flex flex-col gap-3">
-              <Button
-                variant="hero"
-                size="lg"
-                onClick={() => {
-                  setOpen(false);
-                  navigate("/#pricing");
-                }}
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl flex items-center gap-2">
+              <Crown className="w-6 h-6 text-amber-400" />
+              Choose Your Plan
+            </DialogTitle>
+            <DialogDescription>
+              Select a plan to submit your request. Payment will complete your submission.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 mt-4">
+            {plans.map((plan) => (
+              <div
+                key={plan.planKey}
+                className={`relative rounded-xl p-5 border transition-all ${
+                  plan.featured
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-muted/20"
+                }`}
               >
-                {hasSubscription ? "Upgrade Plan" : "View Plans"}
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-              <Button variant="ghost" onClick={() => setOpen(false)}>
-                Maybe Later
-              </Button>
-            </div>
+                {plan.featured && (
+                  <span className="absolute -top-2 right-4 bg-cta-gradient text-primary-foreground text-xs font-semibold px-2 py-0.5 rounded-full">
+                    Popular
+                  </span>
+                )}
+                
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h3 className="font-display font-semibold text-lg mb-1">{plan.name}</h3>
+                    <p className="text-sm text-muted-foreground mb-3">{plan.description}</p>
+                    <ul className="flex flex-wrap gap-x-4 gap-y-1">
+                      {plan.features.map((feature) => (
+                        <li key={feature} className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Check className="w-3 h-3 text-primary" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="text-right flex-shrink-0">
+                    <div className="mb-2">
+                      <span className="font-display text-2xl font-bold">{plan.price}</span>
+                      <span className="text-muted-foreground text-sm ml-1">{plan.period}</span>
+                    </div>
+                    <Button
+                      variant={plan.featured ? "hero" : "outline"}
+                      size="sm"
+                      onClick={() => handleCheckout(plan.planKey)}
+                      disabled={loadingPlan !== null}
+                    >
+                      {loadingPlan === plan.planKey ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          Pay & Submit
+                          <ArrowRight className="w-3 h-3 ml-1" />
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
+
+          <Button variant="ghost" className="mt-2" onClick={() => setStep("form")}>
+            ← Back to form
+          </Button>
         </DialogContent>
       </Dialog>
     );
@@ -345,7 +451,7 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
           <div className="py-12 flex items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        ) : isSuccess ? (
+        ) : step === "success" ? (
           <div className="py-12 text-center">
             <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-8 h-8 text-primary" />
@@ -466,11 +572,17 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
                   />
                 </div>
 
-                {/* Usage Info */}
+                {/* Info */}
                 <div className="glass rounded-lg p-4 text-sm">
                   <p className="text-muted-foreground">
-                    <span className="font-semibold text-foreground">Requests remaining: {getRemainingRequests()}</span>
-                    {" "}• Any filing fees charged by the agency will be billed separately at cost.
+                    {canSubmitRequest() ? (
+                      <>
+                        <span className="font-semibold text-foreground">Requests remaining: {getRemainingRequests()}</span>
+                        {" "}• Any filing fees charged by the agency will be billed separately at cost.
+                      </>
+                    ) : (
+                      <>You'll select a plan after filling out your request details.</>
+                    )}
                   </p>
                 </div>
 
@@ -487,9 +599,14 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
                       <Loader2 className="w-5 h-5 animate-spin" />
                       Processing...
                     </>
-                  ) : (
+                  ) : canSubmitRequest() ? (
                     <>
                       Submit Request
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  ) : (
+                    <>
+                      Continue to Payment
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}
