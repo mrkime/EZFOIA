@@ -18,14 +18,25 @@ function formatPhoneDisplay(digits: string): string {
 }
 
 /**
- * Extracts only the 10 US digits from a phone value (strips +1 and formatting)
+ * Extracts only the 10 US national digits from an E.164 phone value.
+ *
+ * Our app stores phone numbers as E.164 in the form: +1XXXXXXXXXX (or partial during typing).
+ * For display, we always want the national number only.
  */
 function extractDigits(value: string): string {
-  const allDigits = value.replace(/\D/g, "");
-  // If starts with 1 and has 11 digits, strip leading 1
+  const trimmed = value.trim();
+  const allDigits = trimmed.replace(/\D/g, "");
+
+  // If the value is explicitly in +1... format, always drop the country code, even when partial.
+  if (trimmed.startsWith("+1")) {
+    return allDigits.slice(1, 11);
+  }
+
+  // Fallback: if we detect an 11-digit NANP number starting with 1, drop the leading 1.
   if (allDigits.length === 11 && allDigits.startsWith("1")) {
     return allDigits.slice(1);
   }
+
   return allDigits.slice(0, 10);
 }
 
@@ -44,10 +55,10 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
     
     // Sync local state with prop changes (e.g., form reset)
     React.useEffect(() => {
-      const propDigits = extractDigits(value);
-      if (propDigits !== localDigits) {
-        setLocalDigits(propDigits);
-      }
+      setLocalDigits((prev) => {
+        const propDigits = extractDigits(value);
+        return propDigits === prev ? prev : propDigits;
+      });
     }, [value]);
 
     const displayValue = formatPhoneDisplay(localDigits);
