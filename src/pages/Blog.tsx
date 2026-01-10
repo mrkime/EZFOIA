@@ -1,64 +1,48 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, Clock, ArrowRight, BookOpen } from "lucide-react";
 
-const Blog = () => {
-  const featuredPost = {
-    title: "The Future of Government Transparency: AI-Powered FOIA Requests",
-    excerpt: "How artificial intelligence is revolutionizing the way citizens access public records and hold their government accountable.",
-    date: "January 8, 2026",
-    readTime: "8 min read",
-    category: "Technology",
-    image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80",
-  };
+type BlogPost = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  category: string;
+  image_url: string | null;
+  is_featured: boolean;
+  read_time: string | null;
+  created_at: string;
+};
 
-  const posts = [
-    {
-      title: "5 Tips for Writing Effective FOIA Requests",
-      excerpt: "Learn the best practices for crafting requests that get results faster.",
-      date: "January 5, 2026",
-      readTime: "5 min read",
-      category: "Guide",
-    },
-    {
-      title: "Understanding State-Level Open Records Laws",
-      excerpt: "A comprehensive look at how FOIA equivalents vary across all 50 states.",
-      date: "January 2, 2026",
-      readTime: "12 min read",
-      category: "Legal",
-    },
-    {
-      title: "Case Study: How Journalists Used FOIA to Uncover Corruption",
-      excerpt: "Real-world examples of investigative journalism powered by public records.",
-      date: "December 28, 2025",
-      readTime: "7 min read",
-      category: "Case Study",
-    },
-    {
-      title: "FOIA Response Times: What to Expect in 2026",
-      excerpt: "Analyzing agency response patterns and how to plan your requests accordingly.",
-      date: "December 22, 2025",
-      readTime: "6 min read",
-      category: "Analysis",
-    },
-    {
-      title: "Appealing a FOIA Denial: A Step-by-Step Guide",
-      excerpt: "Don't give up when your request is denied. Here's how to fight back effectively.",
-      date: "December 18, 2025",
-      readTime: "9 min read",
-      category: "Guide",
-    },
-    {
-      title: "The Most Requested Records of 2025",
-      excerpt: "A look at the topics and agencies that saw the most FOIA activity this year.",
-      date: "December 15, 2025",
-      readTime: "4 min read",
-      category: "Trends",
-    },
-  ];
+const Blog = () => {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("id, title, slug, excerpt, category, image_url, is_featured, read_time, created_at")
+        .eq("is_published", true)
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setPosts(data);
+      }
+      setLoading(false);
+    };
+
+    fetchPosts();
+  }, []);
+
+  const featuredPost = posts.find((p) => p.is_featured) || posts[0];
+  const otherPosts = posts.filter((p) => p.id !== featuredPost?.id);
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -68,8 +52,17 @@ const Blog = () => {
       "Case Study": "bg-orange-500/20 text-orange-400 border-orange-500/30",
       Analysis: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
       Trends: "bg-pink-500/20 text-pink-400 border-pink-500/30",
+      News: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
     };
     return colors[category] || "bg-muted text-muted-foreground";
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
   return (
@@ -93,82 +86,114 @@ const Blog = () => {
         </div>
       </section>
 
-      {/* Featured Post */}
-      <section className="py-8 px-6">
-        <div className="container mx-auto max-w-6xl">
-          <Card className="bg-card border-border overflow-hidden">
-            <div className="grid md:grid-cols-2">
-              <div className="aspect-video md:aspect-auto bg-muted">
-                <img 
-                  src={featuredPost.image} 
-                  alt={featuredPost.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="p-8 flex flex-col justify-center">
-                <Badge className={`w-fit mb-4 ${getCategoryColor(featuredPost.category)}`}>
-                  {featuredPost.category}
-                </Badge>
-                <h2 className="font-display text-2xl md:text-3xl font-bold mb-4">
-                  {featuredPost.title}
-                </h2>
-                <p className="text-muted-foreground mb-6">{featuredPost.excerpt}</p>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {featuredPost.date}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    {featuredPost.readTime}
-                  </span>
-                </div>
-                <Button variant="hero" className="w-fit">
-                  Read Article
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
+      {loading ? (
+        <section className="py-8 px-6">
+          <div className="container mx-auto max-w-6xl space-y-8">
+            <Skeleton className="h-80 w-full rounded-xl" />
+            <div className="grid md:grid-cols-3 gap-6">
+              <Skeleton className="h-64 rounded-xl" />
+              <Skeleton className="h-64 rounded-xl" />
+              <Skeleton className="h-64 rounded-xl" />
             </div>
-          </Card>
-        </div>
-      </section>
-
-      {/* All Posts */}
-      <section className="py-16 px-6">
-        <div className="container mx-auto max-w-6xl">
-          <h2 className="font-display text-2xl font-bold mb-8">Latest Articles</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.map((post, index) => (
-              <Card key={index} className="bg-card border-border hover:border-primary/50 transition-colors cursor-pointer group">
-                <CardHeader>
-                  <Badge className={`w-fit mb-2 ${getCategoryColor(post.category)}`}>
-                    {post.category}
-                  </Badge>
-                  <CardTitle className="group-hover:text-primary transition-colors">
-                    {post.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="mb-4">{post.excerpt}</CardDescription>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {post.date}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {post.readTime}
-                    </span>
+          </div>
+        </section>
+      ) : posts.length === 0 ? (
+        <section className="py-16 px-6">
+          <div className="container mx-auto max-w-4xl text-center">
+            <p className="text-muted-foreground text-lg">No blog posts yet. Check back soon!</p>
+          </div>
+        </section>
+      ) : (
+        <>
+          {/* Featured Post */}
+          {featuredPost && (
+            <section className="py-8 px-6">
+              <div className="container mx-auto max-w-6xl">
+                <Card className="bg-card border-border overflow-hidden">
+                  <div className="grid md:grid-cols-2">
+                    <div className="aspect-video md:aspect-auto bg-muted">
+                      {featuredPost.image_url ? (
+                        <img 
+                          src={featuredPost.image_url} 
+                          alt={featuredPost.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                          <BookOpen className="w-16 h-16 text-primary/30" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-8 flex flex-col justify-center">
+                      <Badge className={`w-fit mb-4 ${getCategoryColor(featuredPost.category)}`}>
+                        {featuredPost.category}
+                      </Badge>
+                      <h2 className="font-display text-2xl md:text-3xl font-bold mb-4">
+                        {featuredPost.title}
+                      </h2>
+                      <p className="text-muted-foreground mb-6">{featuredPost.excerpt}</p>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          {formatDate(featuredPost.created_at)}
+                        </span>
+                        {featuredPost.read_time && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            {featuredPost.read_time}
+                          </span>
+                        )}
+                      </div>
+                      <Button variant="hero" className="w-fit">
+                        Read Article
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          <div className="text-center mt-12">
-            <Button variant="outline" size="lg">Load More Articles</Button>
-          </div>
-        </div>
-      </section>
+                </Card>
+              </div>
+            </section>
+          )}
+
+          {/* All Posts */}
+          {otherPosts.length > 0 && (
+            <section className="py-16 px-6">
+              <div className="container mx-auto max-w-6xl">
+                <h2 className="font-display text-2xl font-bold mb-8">Latest Articles</h2>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {otherPosts.map((post) => (
+                    <Card key={post.id} className="bg-card border-border hover:border-primary/50 transition-colors cursor-pointer group">
+                      <CardHeader>
+                        <Badge className={`w-fit mb-2 ${getCategoryColor(post.category)}`}>
+                          {post.category}
+                        </Badge>
+                        <CardTitle className="group-hover:text-primary transition-colors">
+                          {post.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <CardDescription className="mb-4">{post.excerpt}</CardDescription>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {formatDate(post.created_at)}
+                          </span>
+                          {post.read_time && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {post.read_time}
+                            </span>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+        </>
+      )}
 
       <Footer />
     </div>

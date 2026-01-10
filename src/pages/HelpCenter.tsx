@@ -1,8 +1,11 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   HelpCircle, 
   FileText, 
@@ -15,69 +18,68 @@ import {
   Mail,
   Phone
 } from "lucide-react";
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import AIChatbot from "@/components/help/AIChatbot";
 
+type HelpArticle = {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  category: string;
+  is_faq: boolean;
+};
+
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  "FOIA Requests": FileText,
+  "Billing & Plans": CreditCard,
+  "Account": User,
+  "Technical": Settings,
+  "General": HelpCircle,
+};
+
 const HelpCenter = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [articles, setArticles] = useState<HelpArticle[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const categories = [
-    {
-      icon: FileText,
-      title: "FOIA Requests",
-      description: "Learn how to create, track, and manage your requests",
-      articles: 12,
-    },
-    {
-      icon: CreditCard,
-      title: "Billing & Plans",
-      description: "Payment methods, subscriptions, and invoices",
-      articles: 8,
-    },
-    {
-      icon: User,
-      title: "Account",
-      description: "Profile settings, security, and preferences",
-      articles: 6,
-    },
-    {
-      icon: Settings,
-      title: "Technical",
-      description: "API access, integrations, and troubleshooting",
-      articles: 10,
-    },
-  ];
+  useEffect(() => {
+    const fetchArticles = async () => {
+      const { data, error } = await supabase
+        .from("help_articles")
+        .select("id, title, slug, content, category, is_faq")
+        .eq("is_published", true)
+        .order("sort_order");
 
-  const popularArticles = [
-    "How do I submit my first FOIA request?",
-    "What happens after I submit a request?",
-    "How long does it take to get a response?",
-    "Can I cancel or modify a pending request?",
-    "What are the different subscription plans?",
-    "How do I upgrade or downgrade my plan?",
-    "What file formats are supported for documents?",
-    "How do I appeal a denied request?",
-  ];
+      if (!error && data) {
+        setArticles(data);
+      }
+      setLoading(false);
+    };
 
-  const faqs = [
-    {
-      question: "What is EZFOIA?",
-      answer: "EZFOIA is a platform that simplifies the process of filing Freedom of Information Act requests with government agencies. We handle the paperwork, tracking, and follow-ups so you can focus on the information you need.",
-    },
-    {
-      question: "How much does it cost?",
-      answer: "We offer flexible pricing plans starting with a free tier that includes 3 requests per month. Paid plans offer unlimited requests, priority processing, and additional features. Check our pricing page for details.",
-    },
-    {
-      question: "Which agencies can I request records from?",
-      answer: "You can submit requests to any federal agency covered by FOIA. We also support many state and local agencies across the United States through their respective open records laws.",
-    },
-    {
-      question: "How long does it take to receive documents?",
-      answer: "Response times vary by agency. Federal agencies are required to respond within 20 business days, but complex requests may take longer. We track all deadlines and follow up automatically.",
-    },
-  ];
+    fetchArticles();
+  }, []);
+
+  // Group articles by category
+  const categories = articles.reduce((acc, article) => {
+    if (!acc[article.category]) {
+      acc[article.category] = [];
+    }
+    acc[article.category].push(article);
+    return acc;
+  }, {} as Record<string, HelpArticle[]>);
+
+  const faqs = articles.filter((a) => a.is_faq);
+  const popularArticles = articles.filter((a) => !a.is_faq).slice(0, 8);
+
+  // Filter articles based on search
+  const filteredArticles = searchQuery.trim()
+    ? articles.filter(
+        (a) =>
+          a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          a.content.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -106,71 +108,132 @@ const HelpCenter = () => {
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="py-16 px-6">
-        <div className="container mx-auto max-w-6xl">
-          <h2 className="font-display text-2xl font-bold mb-8">Browse by Category</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {categories.map((category, index) => (
-              <Card key={index} className="bg-card border-border hover:border-primary/50 transition-colors cursor-pointer group">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <category.icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <CardTitle className="group-hover:text-primary transition-colors">
-                    {category.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="mb-2">{category.description}</CardDescription>
-                  <span className="text-sm text-primary">{category.articles} articles</span>
+      {/* Search Results */}
+      {searchQuery.trim() && (
+        <section className="py-8 px-6">
+          <div className="container mx-auto max-w-4xl">
+            <h2 className="font-display text-xl font-bold mb-4">
+              Search Results ({filteredArticles.length})
+            </h2>
+            {filteredArticles.length === 0 ? (
+              <p className="text-muted-foreground">No articles found matching your search.</p>
+            ) : (
+              <Card className="bg-card border-border">
+                <CardContent className="p-0">
+                  {filteredArticles.map((article, index) => (
+                    <div
+                      key={article.id}
+                      className={`flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
+                        index !== filteredArticles.length - 1 ? "border-b border-border" : ""
+                      }`}
+                    >
+                      <div>
+                        <span className="text-foreground font-medium">{article.title}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">({article.category})</span>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
-            ))}
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Popular Articles */}
-      <section className="py-16 px-6 bg-muted/30">
-        <div className="container mx-auto max-w-4xl">
-          <h2 className="font-display text-2xl font-bold mb-8">Popular Articles</h2>
-          <Card className="bg-card border-border">
-            <CardContent className="p-0">
-              {popularArticles.map((article, index) => (
-                <div
-                  key={index}
-                  className={`flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
-                    index !== popularArticles.length - 1 ? "border-b border-border" : ""
-                  }`}
-                >
-                  <span className="text-foreground">{article}</span>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+      {loading ? (
+        <section className="py-16 px-6">
+          <div className="container mx-auto max-w-6xl">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Skeleton className="h-40 rounded-xl" />
+              <Skeleton className="h-40 rounded-xl" />
+              <Skeleton className="h-40 rounded-xl" />
+              <Skeleton className="h-40 rounded-xl" />
+            </div>
+          </div>
+        </section>
+      ) : !searchQuery.trim() && (
+        <>
+          {/* Categories */}
+          <section className="py-16 px-6">
+            <div className="container mx-auto max-w-6xl">
+              <h2 className="font-display text-2xl font-bold mb-8">Browse by Category</h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {Object.entries(categories).map(([category, categoryArticles]) => {
+                  const IconComponent = CATEGORY_ICONS[category] || HelpCircle;
+                  return (
+                    <Card key={category} className="bg-card border-border hover:border-primary/50 transition-colors cursor-pointer group">
+                      <CardHeader>
+                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                          <IconComponent className="w-6 h-6 text-primary" />
+                        </div>
+                        <CardTitle className="group-hover:text-primary transition-colors">
+                          {category}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <CardDescription className="mb-2">
+                          {categoryArticles.length} article{categoryArticles.length !== 1 ? "s" : ""}
+                        </CardDescription>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+                {Object.keys(categories).length === 0 && (
+                  <p className="col-span-4 text-center text-muted-foreground py-8">
+                    No categories yet. Check back soon!
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Popular Articles */}
+          {popularArticles.length > 0 && (
+            <section className="py-16 px-6 bg-muted/30">
+              <div className="container mx-auto max-w-4xl">
+                <h2 className="font-display text-2xl font-bold mb-8">Popular Articles</h2>
+                <Card className="bg-card border-border">
+                  <CardContent className="p-0">
+                    {popularArticles.map((article, index) => (
+                      <div
+                        key={article.id}
+                        className={`flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
+                          index !== popularArticles.length - 1 ? "border-b border-border" : ""
+                        }`}
+                      >
+                        <span className="text-foreground">{article.title}</span>
+                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+          )}
+
+          {/* FAQs */}
+          {faqs.length > 0 && (
+            <section className="py-16 px-6">
+              <div className="container mx-auto max-w-4xl">
+                <h2 className="font-display text-2xl font-bold mb-8">Frequently Asked Questions</h2>
+                <div className="space-y-4">
+                  {faqs.map((faq) => (
+                    <Card key={faq.id} className="bg-card border-border">
+                      <CardHeader>
+                        <CardTitle className="text-lg">{faq.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground">{faq.content}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* FAQs */}
-      <section className="py-16 px-6">
-        <div className="container mx-auto max-w-4xl">
-          <h2 className="font-display text-2xl font-bold mb-8">Frequently Asked Questions</h2>
-          <div className="space-y-4">
-            {faqs.map((faq, index) => (
-              <Card key={index} className="bg-card border-border">
-                <CardHeader>
-                  <CardTitle className="text-lg">{faq.question}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{faq.answer}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+              </div>
+            </section>
+          )}
+        </>
+      )}
 
       {/* Contact Support */}
       <section className="py-16 px-6 bg-muted/30">
