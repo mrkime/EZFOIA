@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -31,7 +31,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, CheckCircle, ArrowRight, LogIn } from "lucide-react";
+import { STRIPE_PRICES } from "@/lib/stripe-config";
+import { Loader2, CheckCircle, ArrowRight, LogIn, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const requestSchema = z.object({
@@ -82,6 +83,19 @@ const recordTypeLabels: Record<string, string> = {
   other: "Other Documents",
 };
 
+interface SubscriptionData {
+  subscribed: boolean;
+  product_id: string | null;
+}
+
+const getRequestLimit = (productId: string | null): number => {
+  if (!productId) return 0;
+  if (productId === STRIPE_PRICES.single.productId) return 1;
+  if (productId === STRIPE_PRICES.professional.productId) return 5;
+  if (productId === STRIPE_PRICES.enterprise.productId) return -1; // unlimited
+  return 0;
+};
+
 interface RequestFormModalProps {
   children: React.ReactNode;
 }
@@ -90,6 +104,9 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
+  const [subLoading, setSubLoading] = useState(true);
+  const [requestCount, setRequestCount] = useState(0);
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -104,6 +121,50 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
     },
   });
 
+  useEffect(() => {
+    if (user && open) {
+      checkSubscriptionAndUsage();
+    }
+  }, [user, open]);
+
+  const checkSubscriptionAndUsage = async () => {
+    setSubLoading(true);
+    try {
+      // Check subscription status
+      const { data: subData, error: subError } = await supabase.functions.invoke("check-subscription");
+      if (subError) throw subError;
+      setSubscription(subData);
+
+      // Get current request count
+      const { count, error: countError } = await supabase
+        .from("foia_requests")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user!.id);
+
+      if (countError) throw countError;
+      setRequestCount(count || 0);
+    } catch (error) {
+      console.error("Error checking subscription:", error);
+      setSubscription({ subscribed: false, product_id: null });
+    } finally {
+      setSubLoading(false);
+    }
+  };
+
+  const canSubmitRequest = (): boolean => {
+    if (!subscription?.subscribed) return false;
+    const limit = getRequestLimit(subscription.product_id);
+    if (limit === -1) return true; // unlimited
+    return requestCount < limit;
+  };
+
+  const getRemainingRequests = (): string => {
+    if (!subscription?.subscribed) return "0";
+    const limit = getRequestLimit(subscription.product_id);
+    if (limit === -1) return "Unlimited";
+    return String(Math.max(0, limit - requestCount));
+  };
+
   const onSubmit = async (data: RequestFormData) => {
     if (!user) {
       toast({
@@ -113,6 +174,15 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
       });
       setOpen(false);
       navigate("/auth");
+      return;
+    }
+
+    if (!canSubmitRequest()) {
+      toast({
+        title: "Subscription Required",
+        description: "Please subscribe to a plan to submit FOIA requests.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -225,11 +295,57 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
     );
   }
 
+  // Show subscription required prompt if user doesn't have an active subscription
+  if (user && open && !subLoading && !canSubmitRequest()) {
+    const hasSubscription = subscription?.subscribed;
+    return (
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>{children}</DialogTrigger>
+        <DialogContent className="sm:max-w-[450px] bg-card border-border">
+          <div className="py-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-6">
+              <Crown className="w-8 h-8 text-amber-400" />
+            </div>
+            <h3 className="font-display text-2xl font-bold mb-2">
+              {hasSubscription ? "Request Limit Reached" : "Subscription Required"}
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              {hasSubscription 
+                ? "You've used all your requests for this billing period. Upgrade your plan for more requests."
+                : "Subscribe to a plan to start submitting FOIA requests. We'll handle everything from filing to document delivery."
+              }
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button
+                variant="hero"
+                size="lg"
+                onClick={() => {
+                  setOpen(false);
+                  navigate("/#pricing");
+                }}
+              >
+                {hasSubscription ? "Upgrade Plan" : "View Plans"}
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+              <Button variant="ghost" onClick={() => setOpen(false)}>
+                Maybe Later
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-card border-border">
-        {isSuccess ? (
+        {subLoading ? (
+          <div className="py-12 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : isSuccess ? (
           <div className="py-12 text-center">
             <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-8 h-8 text-primary" />
@@ -350,11 +466,11 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
                   />
                 </div>
 
-                {/* Pricing Note */}
+                {/* Usage Info */}
                 <div className="glass rounded-lg p-4 text-sm">
                   <p className="text-muted-foreground">
-                    <span className="font-semibold text-foreground">$75 flat rate</span> per request. 
-                    Any filing fees charged by the agency will be billed separately at cost.
+                    <span className="font-semibold text-foreground">Requests remaining: {getRemainingRequests()}</span>
+                    {" "}• Any filing fees charged by the agency will be billed separately at cost.
                   </p>
                 </div>
 
