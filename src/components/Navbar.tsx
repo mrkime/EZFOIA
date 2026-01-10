@@ -46,8 +46,8 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass">
-      <div className="container mx-auto px-6 py-4">
+    <nav className="fixed top-4 left-4 right-4 z-50 glass-navbar rounded-2xl shadow-lg shadow-background/20 transition-all duration-300">
+      <div className="container mx-auto px-6 py-3">
         <div className="flex items-center justify-between">
           <Logo />
 
@@ -57,7 +57,7 @@ const Navbar = () => {
               <NavigationMenuList>
                 {/* Product Dropdown */}
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent">Product</NavigationMenuTrigger>
+                  <NavigationMenuTrigger className="bg-transparent hover:bg-accent/10 data-[state=open]:bg-accent/10 transition-colors duration-200 font-medium">Product</NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <ul className="grid w-[320px] gap-1 p-3 bg-popover">
                       <li>
@@ -118,7 +118,7 @@ const Navbar = () => {
 
                 {/* Resources Dropdown */}
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent">Resources</NavigationMenuTrigger>
+                  <NavigationMenuTrigger className="bg-transparent hover:bg-accent/10 data-[state=open]:bg-accent/10 transition-colors duration-200 font-medium">Resources</NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <ul className="grid w-[320px] gap-1 p-3 bg-popover">
                       <li>
@@ -170,7 +170,7 @@ const Navbar = () => {
                     <Link
                       to="/about"
                       className={cn(
-                        "group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                        "nav-link-hover group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium transition-all duration-200 hover:text-primary focus:outline-none disabled:pointer-events-none disabled:opacity-50"
                       )}
                     >
                       About
@@ -183,7 +183,7 @@ const Navbar = () => {
                     <Link
                       to="/contact"
                       className={cn(
-                        "group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                        "nav-link-hover group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium transition-all duration-200 hover:text-primary focus:outline-none disabled:pointer-events-none disabled:opacity-50"
                       )}
                     >
                       Contact
@@ -194,42 +194,44 @@ const Navbar = () => {
             </NavigationMenu>
           </div>
 
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
             {loading ? null : user ? (
               <>
                 <Link to="/dashboard">
-                  <Button variant="ghost">Dashboard</Button>
+                  <Button variant="ghost" className="font-medium hover:bg-accent/10 transition-colors duration-200">Dashboard</Button>
                 </Link>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="gap-2">
-                      <User className="w-4 h-4" />
-                      {user.user_metadata?.full_name || user.email?.split("@")[0]}
+                    <Button variant="ghost" className="gap-2 hover:bg-accent/10 transition-colors duration-200">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center border border-primary/30">
+                        <User className="w-3.5 h-3.5 text-primary" />
+                      </div>
+                      <span className="font-medium">{user.user_metadata?.full_name || user.email?.split("@")[0]}</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-popover border-border w-48">
+                  <DropdownMenuContent align="end" className="bg-popover/95 backdrop-blur-xl border-border/50 w-48 shadow-xl">
                     <DropdownMenuItem asChild className="cursor-pointer p-0">
                       <ThemeToggle />
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer">
+                    <DropdownMenuSeparator className="bg-border/50" />
+                    <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer hover:bg-destructive/10 hover:text-destructive transition-colors">
                       <LogOut className="w-4 h-4" />
                       Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <RequestFormModal>
-                  <Button variant="hero">New Request</Button>
+                  <Button variant="hero" className="nav-glow-button">New Request</Button>
                 </RequestFormModal>
               </>
             ) : (
               <>
                 <ThemeToggle />
                 <Link to="/auth">
-                  <Button variant="ghost">Sign In</Button>
+                  <Button variant="ghost" className="font-medium hover:bg-accent/10 transition-colors duration-200">Sign In</Button>
                 </Link>
                 <RequestFormModal>
-                  <Button variant="hero">Get Started</Button>
+                  <Button variant="hero" className="nav-glow-button">Get Started</Button>
                 </RequestFormModal>
               </>
             )}
@@ -237,16 +239,16 @@ const Navbar = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-foreground"
+            className="md:hidden text-foreground p-2 rounded-xl hover:bg-accent/10 transition-colors duration-200"
             onClick={() => setIsOpen(!isOpen)}
           >
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden mt-4 pb-4 border-t border-border pt-4">
+          <div className="md:hidden mt-3 pb-4 border-t border-border/30 pt-4">
             <div className="flex flex-col gap-2">
               {/* Product Accordion */}
               <button
