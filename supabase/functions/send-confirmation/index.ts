@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -9,13 +11,14 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-interface EmailRequest {
-  to: string;
-  name: string;
-  agencyName: string;
-  recordType: string;
-  requestId: string;
-}
+// Input validation schema
+const emailRequestSchema = z.object({
+  to: z.string().email("Invalid email format").max(255, "Email too long"),
+  name: z.string().trim().min(1, "Name is required").max(200, "Name too long"),
+  agencyName: z.string().trim().min(1, "Agency name is required").max(200, "Agency name too long"),
+  recordType: z.string().trim().min(1, "Record type is required").max(100, "Record type too long"),
+  requestId: z.string().uuid("Invalid request ID format"),
+});
 
 const handler = async (req: Request): Promise<Response> => {
   console.log("send-confirmation function invoked");
@@ -26,10 +29,93 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { to, name, agencyName, recordType, requestId }: EmailRequest = await req.json();
+    // 1. Check for authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("No authorization header provided");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // 2. Create authenticated Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // 3. Verify the user is authenticated
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      console.error("User authentication failed:", userError);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    console.log(`Authenticated user: ${user.id}`);
+
+    // 4. Parse and validate input
+    const rawBody = await req.json();
+    const validationResult = emailRequestSchema.safeParse(rawBody);
     
+    if (!validationResult.success) {
+      console.error("Validation failed:", validationResult.error.errors);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid input", 
+          details: validationResult.error.errors.map(e => e.message) 
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    const { to, name, agencyName, recordType, requestId } = validationResult.data;
+
+    // 5. Verify the request belongs to the authenticated user
+    const { data: request, error: requestError } = await supabaseClient
+      .from("foia_requests")
+      .select("id, user_id")
+      .eq("id", requestId)
+      .single();
+
+    if (requestError || !request) {
+      console.error("Request not found:", requestError);
+      return new Response(
+        JSON.stringify({ error: "Request not found" }),
+        {
+          status: 404,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    if (request.user_id !== user.id) {
+      console.error("User does not own this request");
+      return new Response(
+        JSON.stringify({ error: "Forbidden" }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     console.log(`Sending confirmation email to ${to} for request ${requestId}`);
 
+    // 6. Send the email
     const emailResponse = await resend.emails.send({
       from: "EZFOIA <onboarding@resend.dev>",
       to: [to],
