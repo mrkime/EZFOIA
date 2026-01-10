@@ -159,20 +159,27 @@ const handler = async (req: Request): Promise<Response> => {
 
     logStep("Processing status change", { requestId, oldStatus, newStatus });
 
-    // Get the request details with profile
+    // Get the request details
     const { data: request, error: requestError } = await supabaseAdmin
       .from("foia_requests")
-      .select("*, profiles:user_id(full_name, phone, sms_notifications)")
+      .select("*")
       .eq("id", requestId)
       .single();
 
     if (requestError || !request) {
-      logStep("Request not found", { error: requestError });
+      logStep("Request not found", { error: requestError, requestId });
       return new Response(
         JSON.stringify({ error: "Request not found" }),
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
+
+    // Get profile separately (no foreign key relationship)
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name, phone, sms_notifications")
+      .eq("user_id", request.user_id)
+      .single();
 
     // Get user email from auth
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(
@@ -196,21 +203,21 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const userName = request.profiles?.full_name || userData.user.user_metadata?.full_name || "there";
+    const userName = profile?.full_name || userData.user.user_metadata?.full_name || "there";
     const statusLabel = getStatusLabel(newStatus);
     const statusColor = getStatusColor(newStatus);
 
-    logStep("Sending notifications", { email: userEmail, hasPhone: !!request.profiles?.phone });
+    logStep("Sending notifications", { email: userEmail, hasPhone: !!profile?.phone });
 
     // Send SMS notification if user has phone and SMS enabled
     let smsSent = false;
-    if (request.profiles?.phone && request.profiles?.sms_notifications) {
+    if (profile?.phone && profile?.sms_notifications) {
       const smsMessage = `EZFOIA: Your FOIA request for ${request.agency_name} is now "${statusLabel}". ${
         newStatus.toLowerCase() === "completed" 
           ? "Your documents are ready for download!" 
           : "Log in to view details."
       }`;
-      smsSent = await sendTwilioSMS(request.profiles.phone, smsMessage);
+      smsSent = await sendTwilioSMS(profile.phone, smsMessage);
     }
 
     // Send notification email
