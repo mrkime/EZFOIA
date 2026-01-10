@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, ArrowRight, Loader2, Sparkles, Zap, Building2 } from "lucide-react";
@@ -291,26 +291,71 @@ const Pricing = ({ showHeader = true, className, initialBillingPeriod = "monthly
                   <p className="text-muted-foreground text-sm">{plan.description}</p>
                 </div>
 
-                <div className="mb-8">
+                <div className="mb-8 min-h-[80px]">
                   <div className="flex items-baseline gap-1">
-                    <span className="font-display text-4xl font-bold">{formatPrice(displayPrice)}</span>
-                    <span className="text-muted-foreground">/{displayPeriod.replace("per ", "")}</span>
+                    <AnimatePresence mode="wait">
+                      <motion.span 
+                        key={`${plan.planKey}-${billingPeriod}`}
+                        className="font-display text-4xl font-bold"
+                        initial={{ opacity: 0, y: -20, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                        transition={{ 
+                          type: "spring", 
+                          stiffness: 300, 
+                          damping: 25,
+                          duration: 0.3 
+                        }}
+                      >
+                        {formatPrice(displayPrice)}
+                      </motion.span>
+                    </AnimatePresence>
+                    <AnimatePresence mode="wait">
+                      <motion.span 
+                        key={`period-${plan.planKey}-${billingPeriod}`}
+                        className="text-muted-foreground"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        /{displayPeriod.replace("per ", "")}
+                      </motion.span>
+                    </AnimatePresence>
                   </div>
-                  {isAnnual && plan.planKey !== "single" && monthlyEquivalent && (
-                    <div className="mt-2 space-y-1">
-                      <p className="text-sm text-muted-foreground">
-                        {formatPrice(monthlyEquivalent)}/month billed annually
-                      </p>
-                      <p className="text-sm text-emerald-500 font-medium">
-                        Save {formatPrice(yearlySavings)}/year
-                      </p>
-                    </div>
-                  )}
-                  {!isAnnual && plan.planKey !== "single" && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      billed monthly
-                    </p>
-                  )}
+                  <AnimatePresence mode="wait">
+                    {isAnnual && plan.planKey !== "single" && monthlyEquivalent && (
+                      <motion.div 
+                        className="mt-2 space-y-1"
+                        initial={{ opacity: 0, height: 0, y: -10 }}
+                        animate={{ opacity: 1, height: "auto", y: 0 }}
+                        exit={{ opacity: 0, height: 0, y: -10 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                      >
+                        <p className="text-sm text-muted-foreground">
+                          {formatPrice(monthlyEquivalent)}/month billed annually
+                        </p>
+                        <motion.p 
+                          className="text-sm text-emerald-500 font-medium"
+                          initial={{ scale: 0.8 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 15, delay: 0.1 }}
+                        >
+                          Save {formatPrice(yearlySavings)}/year
+                        </motion.p>
+                      </motion.div>
+                    )}
+                    {!isAnnual && plan.planKey !== "single" && (
+                      <motion.p 
+                        className="text-sm text-muted-foreground mt-1"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        billed monthly
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <ul className="space-y-4 mb-8">
