@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { FileText, Loader2, ArrowLeft, Mail, CheckCircle, Phone } from "lucide-react";
+import { FileText, Loader2, ArrowLeft, Mail, CheckCircle, Phone, Smartphone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,7 +44,7 @@ type SignInFormData = z.infer<typeof signInSchema>;
 type SignUpFormData = z.infer<typeof signUpSchema>;
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
-type AuthView = "signIn" | "signUp" | "forgotPassword";
+type AuthView = "signIn" | "signUp" | "forgotPassword" | "phoneSignIn" | "phoneVerify";
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -72,7 +72,9 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
-  const { signIn, signUp, signInWithGoogle, resetPassword, user, loading } = useAuth();
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const { signIn, signUp, signInWithGoogle, signInWithPhone, verifyPhoneOtp, resetPassword, user, loading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -165,9 +167,52 @@ const Auth = () => {
     }
   };
 
+  const handlePhoneSignIn = async () => {
+    if (!phoneNumber || phoneNumber.length < 12) {
+      toast({ title: "Invalid Phone", description: "Please enter a valid phone number.", variant: "destructive" });
+      return;
+    }
+    setIsLoading(true);
+    const { error } = await signInWithPhone(phoneNumber);
+    setIsLoading(false);
+
+    if (error) {
+      toast({ 
+        title: "SMS Failed", 
+        description: "Could not send verification code. Please try again.", 
+        variant: "destructive" 
+      });
+    } else {
+      setView("phoneVerify");
+      toast({ title: "Code Sent!", description: "Check your phone for the verification code." });
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otpCode || otpCode.length < 6) {
+      toast({ title: "Invalid Code", description: "Please enter the 6-digit code.", variant: "destructive" });
+      return;
+    }
+    setIsLoading(true);
+    const { error } = await verifyPhoneOtp(phoneNumber, otpCode);
+    setIsLoading(false);
+
+    if (error) {
+      toast({ 
+        title: "Verification Failed", 
+        description: "Invalid or expired code. Please try again.", 
+        variant: "destructive" 
+      });
+    } else {
+      toast({ title: "Welcome!", description: "You've signed in successfully." });
+      navigate("/");
+    }
+  };
+
   const switchView = (newView: AuthView) => {
     setView(newView);
     setResetEmailSent(false);
+    setOtpCode("");
     signInForm.reset();
     signUpForm.reset();
     forgotPasswordForm.reset();
@@ -187,6 +232,10 @@ const Auth = () => {
         return "Create an account";
       case "forgotPassword":
         return "Reset your password";
+      case "phoneSignIn":
+        return "Sign in with SMS";
+      case "phoneVerify":
+        return "Enter verification code";
       default:
         return "Welcome back";
     }
@@ -198,6 +247,10 @@ const Auth = () => {
         return "Start making FOIA requests in minutes";
       case "forgotPassword":
         return "Enter your email and we'll send you a reset link";
+      case "phoneSignIn":
+        return "We'll send a verification code to your phone";
+      case "phoneVerify":
+        return `Enter the 6-digit code sent to your phone`;
       default:
         return "Sign in to track your FOIA requests";
     }
@@ -276,26 +329,38 @@ const Auth = () => {
                     <p className="text-muted-foreground">{getSubtitle()}</p>
                   </div>
 
-                  {/* Google Sign In Button - Hide on forgot password */}
-                  {view !== "forgotPassword" && (
+                  {/* Social Sign In Buttons - Hide on forgot password and phone views */}
+                  {(view === "signIn" || view === "signUp") && (
                     <>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="lg"
-                        className="w-full mb-6 gap-3"
-                        onClick={handleGoogleSignIn}
-                        disabled={isGoogleLoading}
-                      >
-                        {isGoogleLoading ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                          <>
-                            <GoogleIcon />
-                            Continue with Google
-                          </>
-                        )}
-                      </Button>
+                      <div className="grid grid-cols-2 gap-3 mb-6">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="lg"
+                          className="gap-2"
+                          onClick={handleGoogleSignIn}
+                          disabled={isGoogleLoading}
+                        >
+                          {isGoogleLoading ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <>
+                              <GoogleIcon />
+                              Google
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="lg"
+                          className="gap-2"
+                          onClick={() => switchView("phoneSignIn")}
+                        >
+                          <Smartphone className="w-5 h-5" />
+                          SMS
+                        </Button>
+                      </div>
 
                       <div className="relative mb-6">
                         <div className="absolute inset-0 flex items-center">
@@ -306,6 +371,88 @@ const Auth = () => {
                         </div>
                       </div>
                     </>
+                  )}
+
+                  {/* Phone Sign In Form */}
+                  {view === "phoneSignIn" && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          <Phone className="w-4 h-4" />
+                          Phone
+                        </label>
+                        <PhoneInput
+                          value={phoneNumber}
+                          onChange={setPhoneNumber}
+                          className="bg-card border-border"
+                        />
+                      </div>
+                      <Button 
+                        type="button" 
+                        variant="hero" 
+                        size="lg" 
+                        className="w-full" 
+                        onClick={handlePhoneSignIn}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Send Code"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="w-full"
+                        onClick={() => switchView("signIn")}
+                      >
+                        Back to Sign In
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Phone OTP Verification Form */}
+                  {view === "phoneVerify" && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Verification Code</label>
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          placeholder="123456"
+                          value={otpCode}
+                          onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                          className="bg-card border-border text-center text-2xl tracking-widest"
+                        />
+                      </div>
+                      <Button 
+                        type="button" 
+                        variant="hero" 
+                        size="lg" 
+                        className="w-full" 
+                        onClick={handleVerifyOtp}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verify & Sign In"}
+                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="flex-1"
+                          onClick={() => switchView("phoneSignIn")}
+                        >
+                          Change Number
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="flex-1"
+                          onClick={handlePhoneSignIn}
+                          disabled={isLoading}
+                        >
+                          Resend Code
+                        </Button>
+                      </div>
+                    </div>
                   )}
 
                   {/* Sign Up Form */}
