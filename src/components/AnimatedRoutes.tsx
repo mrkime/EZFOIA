@@ -14,7 +14,9 @@ import NotFound from "@/pages/NotFound";
 import ApiAccess from "@/pages/ApiAccess";
 import FoiaGuide from "@/pages/FoiaGuide";
 import Blog from "@/pages/Blog";
+import BlogPost from "@/pages/BlogPost";
 import HelpCenter from "@/pages/HelpCenter";
+import HelpArticle from "@/pages/HelpArticle";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import Terms from "@/pages/Terms";
 import CookiePolicy from "@/pages/CookiePolicy";
@@ -37,7 +39,10 @@ const AnimatedRoutes = () => {
         <Route path="/api-access" element={<PageTransition><ApiAccess /></PageTransition>} />
         <Route path="/foia-guide" element={<PageTransition><FoiaGuide /></PageTransition>} />
         <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
+        <Route path="/blog/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
         <Route path="/help" element={<PageTransition><HelpCenter /></PageTransition>} />
+        <Route path="/help/category" element={<PageTransition><HelpArticle /></PageTransition>} />
+        <Route path="/help/article/:slug" element={<PageTransition><HelpArticle /></PageTransition>} />
         <Route path="/privacy" element={<PageTransition><PrivacyPolicy /></PageTransition>} />
         <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
         <Route path="/cookies" element={<PageTransition><CookiePolicy /></PageTransition>} />

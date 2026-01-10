@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -109,48 +110,50 @@ const Blog = () => {
           {featuredPost && (
             <section className="py-8 px-6">
               <div className="container mx-auto max-w-6xl">
-                <Card className="bg-card border-border overflow-hidden">
-                  <div className="grid md:grid-cols-2">
-                    <div className="aspect-video md:aspect-auto bg-muted">
-                      {featuredPost.image_url ? (
-                        <img 
-                          src={featuredPost.image_url} 
-                          alt={featuredPost.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-primary/10">
-                          <BookOpen className="w-16 h-16 text-primary/30" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-8 flex flex-col justify-center">
-                      <Badge className={`w-fit mb-4 ${getCategoryColor(featuredPost.category)}`}>
-                        {featuredPost.category}
-                      </Badge>
-                      <h2 className="font-display text-2xl md:text-3xl font-bold mb-4">
-                        {featuredPost.title}
-                      </h2>
-                      <p className="text-muted-foreground mb-6">{featuredPost.excerpt}</p>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {formatDate(featuredPost.created_at)}
-                        </span>
-                        {featuredPost.read_time && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {featuredPost.read_time}
-                          </span>
+                <Link to={`/blog/${featuredPost.slug}`}>
+                  <Card className="bg-card border-border overflow-hidden hover:border-primary/50 transition-colors">
+                    <div className="grid md:grid-cols-2">
+                      <div className="aspect-video md:aspect-auto bg-muted">
+                        {featuredPost.image_url ? (
+                          <img 
+                            src={featuredPost.image_url} 
+                            alt={featuredPost.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                            <BookOpen className="w-16 h-16 text-primary/30" />
+                          </div>
                         )}
                       </div>
-                      <Button variant="hero" className="w-fit">
-                        Read Article
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
+                      <div className="p-8 flex flex-col justify-center">
+                        <Badge className={`w-fit mb-4 ${getCategoryColor(featuredPost.category)}`}>
+                          {featuredPost.category}
+                        </Badge>
+                        <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 group-hover:text-primary transition-colors">
+                          {featuredPost.title}
+                        </h2>
+                        <p className="text-muted-foreground mb-6">{featuredPost.excerpt}</p>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {formatDate(featuredPost.created_at)}
+                          </span>
+                          {featuredPost.read_time && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-4 h-4" />
+                              {featuredPost.read_time}
+                            </span>
+                          )}
+                        </div>
+                        <Button variant="hero" className="w-fit">
+                          Read Article
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </Link>
               </div>
             </section>
           )}
@@ -162,31 +165,33 @@ const Blog = () => {
                 <h2 className="font-display text-2xl font-bold mb-8">Latest Articles</h2>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {otherPosts.map((post) => (
-                    <Card key={post.id} className="bg-card border-border hover:border-primary/50 transition-colors cursor-pointer group">
-                      <CardHeader>
-                        <Badge className={`w-fit mb-2 ${getCategoryColor(post.category)}`}>
-                          {post.category}
-                        </Badge>
-                        <CardTitle className="group-hover:text-primary transition-colors">
-                          {post.title}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <CardDescription className="mb-4">{post.excerpt}</CardDescription>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {formatDate(post.created_at)}
-                          </span>
-                          {post.read_time && (
+                    <Link key={post.id} to={`/blog/${post.slug}`}>
+                      <Card className="bg-card border-border hover:border-primary/50 transition-colors cursor-pointer group h-full">
+                        <CardHeader>
+                          <Badge className={`w-fit mb-2 ${getCategoryColor(post.category)}`}>
+                            {post.category}
+                          </Badge>
+                          <CardTitle className="group-hover:text-primary transition-colors">
+                            {post.title}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <CardDescription className="mb-4">{post.excerpt}</CardDescription>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {post.read_time}
+                              <Calendar className="w-3 h-3" />
+                              {formatDate(post.created_at)}
                             </span>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
+                            {post.read_time && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {post.read_time}
+                              </span>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   ))}
                 </div>
               </div>

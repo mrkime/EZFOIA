@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -18,7 +19,6 @@ import {
   Mail,
   Phone
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import AIChatbot from "@/components/help/AIChatbot";
 
 type HelpArticle = {
@@ -121,9 +121,10 @@ const HelpCenter = () => {
               <Card className="bg-card border-border">
                 <CardContent className="p-0">
                   {filteredArticles.map((article, index) => (
-                    <div
+                    <Link
                       key={article.id}
-                      className={`flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
+                      to={`/help/article/${article.slug}`}
+                      className={`flex items-center justify-between p-4 hover:bg-muted/50 transition-colors ${
                         index !== filteredArticles.length - 1 ? "border-b border-border" : ""
                       }`}
                     >
@@ -132,7 +133,7 @@ const HelpCenter = () => {
                         <span className="ml-2 text-xs text-muted-foreground">({article.category})</span>
                       </div>
                       <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                    </div>
+                    </Link>
                   ))}
                 </CardContent>
               </Card>
@@ -162,21 +163,23 @@ const HelpCenter = () => {
                 {Object.entries(categories).map(([category, categoryArticles]) => {
                   const IconComponent = CATEGORY_ICONS[category] || HelpCircle;
                   return (
-                    <Card key={category} className="bg-card border-border hover:border-primary/50 transition-colors cursor-pointer group">
-                      <CardHeader>
-                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                          <IconComponent className="w-6 h-6 text-primary" />
-                        </div>
-                        <CardTitle className="group-hover:text-primary transition-colors">
-                          {category}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <CardDescription className="mb-2">
-                          {categoryArticles.length} article{categoryArticles.length !== 1 ? "s" : ""}
-                        </CardDescription>
-                      </CardContent>
-                    </Card>
+                    <Link key={category} to={`/help/category?category=${encodeURIComponent(category)}`}>
+                      <Card className="bg-card border-border hover:border-primary/50 transition-colors cursor-pointer group h-full">
+                        <CardHeader>
+                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                            <IconComponent className="w-6 h-6 text-primary" />
+                          </div>
+                          <CardTitle className="group-hover:text-primary transition-colors">
+                            {category}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <CardDescription className="mb-2">
+                            {categoryArticles.length} article{categoryArticles.length !== 1 ? "s" : ""}
+                          </CardDescription>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   );
                 })}
                 {Object.keys(categories).length === 0 && (
@@ -196,15 +199,16 @@ const HelpCenter = () => {
                 <Card className="bg-card border-border">
                   <CardContent className="p-0">
                     {popularArticles.map((article, index) => (
-                      <div
+                      <Link
                         key={article.id}
-                        className={`flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
+                        to={`/help/article/${article.slug}`}
+                        className={`flex items-center justify-between p-4 hover:bg-muted/50 transition-colors ${
                           index !== popularArticles.length - 1 ? "border-b border-border" : ""
                         }`}
                       >
                         <span className="text-foreground">{article.title}</span>
                         <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                      </div>
+                      </Link>
                     ))}
                   </CardContent>
                 </Card>
