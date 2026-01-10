@@ -12,6 +12,7 @@ import { STRIPE_PRICES } from "@/lib/stripe-config";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import UpgradePlanModal from "@/components/UpgradePlanModal";
+import { logger } from "@/lib/logger";
 import {
   User,
   CreditCard,
@@ -86,7 +87,7 @@ const AccountSettings = () => {
         setPhone(data.phone || "");
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      logger.error("Error fetching profile:", error);
     } finally {
       setProfileLoading(false);
     }
@@ -98,7 +99,7 @@ const AccountSettings = () => {
       if (error) throw error;
       setSubscription(data);
     } catch (error) {
-      console.error("Error checking subscription:", error);
+      logger.error("Error checking subscription:", error);
       setSubscription({ subscribed: false, product_id: null, price_id: null, subscription_end: null });
     } finally {
       setSubLoading(false);
@@ -122,7 +123,7 @@ const AccountSettings = () => {
       toast.success("Profile updated successfully");
       setProfile({ full_name: fullName, phone });
     } catch (error) {
-      console.error("Error updating profile:", error);
+      logger.error("Error updating profile:", error);
       toast.error("Failed to update profile");
     } finally {
       setSaving(false);
@@ -138,7 +139,7 @@ const AccountSettings = () => {
         window.open(data.url, "_blank");
       }
     } catch (error) {
-      console.error("Portal error:", error);
+      logger.error("Portal error:", error);
       toast.error("Unable to open subscription management. Please try again.");
     } finally {
       setPortalLoading(false);

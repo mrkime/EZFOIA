@@ -8,6 +8,8 @@ import { CheckCircle, ArrowRight, FileText, Bell, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PENDING_REQUEST_KEY } from "@/components/RequestFormModal";
 import { toast } from "sonner";
+import { validateRequestData } from "@/lib/request-validation";
+import { logger } from "@/lib/logger";
 
 const recordTypeLabels: Record<string, string> = {
   emails: "Emails & Correspondence",
@@ -45,42 +47,52 @@ const PaymentSuccess = () => {
       setSubmittingRequest(true);
 
       try {
-        const data = JSON.parse(pendingData);
+        const rawData = JSON.parse(pendingData);
+        
+        // Re-validate data from localStorage to prevent tampering
+        const validatedData = validateRequestData(rawData);
+        if (!validatedData) {
+          logger.error("Invalid data in localStorage - validation failed");
+          toast.error("Invalid request data. Please submit again from the form.");
+          localStorage.removeItem(PENDING_REQUEST_KEY);
+          setSubmittingRequest(false);
+          return;
+        }
         
         const { data: requestData, error: insertError } = await supabase
           .from("foia_requests")
           .insert({
             user_id: user.id,
-            agency_name: data.agencyName,
-            agency_type: data.agencyType,
-            record_type: data.recordType,
-            record_description: data.recordDescription,
+            agency_name: validatedData.agencyName,
+            agency_type: validatedData.agencyType,
+            record_type: validatedData.recordType,
+            record_description: validatedData.recordDescription,
           })
           .select()
           .single();
 
         if (insertError) throw insertError;
 
-        console.log("Pending FOIA request created:", requestData.id);
+        logger.log("Pending FOIA request created:", requestData.id);
 
         // Send confirmation email
         await supabase.functions.invoke("send-confirmation", {
           body: {
             to: user.email,
             name: user.user_metadata?.full_name || "Valued Customer",
-            agencyName: data.agencyName,
-            recordType: recordTypeLabels[data.recordType] || data.recordType,
+            agencyName: validatedData.agencyName,
+            recordType: recordTypeLabels[validatedData.recordType] || validatedData.recordType,
             requestId: requestData.id,
           },
-        }).catch(console.error);
+        }).catch((err) => logger.error("Email send error:", err));
 
         // Clear pending request
         localStorage.removeItem(PENDING_REQUEST_KEY);
         setRequestSubmitted(true);
         
         toast.success("Your FOIA request has been submitted!");
-      } catch (error: any) {
-        console.error("Error submitting pending request:", error);
+      } catch (error) {
+        logger.error("Error submitting pending request:", error);
         toast.error("Failed to submit your request. Please try from the dashboard.");
       } finally {
         setSubmittingRequest(false);

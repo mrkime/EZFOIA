@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 interface FoiaRequest {
   id: string;
@@ -133,7 +134,7 @@ const RequestDetails = () => {
       }
       setRequest(data);
     } catch (error) {
-      console.error("Error fetching request:", error);
+      logger.error("Error fetching request:", error);
       toast.error("Failed to load request details");
       navigate("/dashboard");
     } finally {
@@ -152,7 +153,7 @@ const RequestDetails = () => {
       if (error) throw error;
       setDocuments(data || []);
     } catch (error) {
-      console.error("Error fetching documents:", error);
+      logger.error("Error fetching documents:", error);
     } finally {
       setDocumentsLoading(false);
     }
@@ -176,7 +177,7 @@ const RequestDetails = () => {
       URL.revokeObjectURL(url);
       toast.success("Download started");
     } catch (error) {
-      console.error("Error downloading document:", error);
+      logger.error("Error downloading document:", error);
       toast.error("Failed to download document");
     }
   };

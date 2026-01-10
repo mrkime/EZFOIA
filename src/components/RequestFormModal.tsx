@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -34,25 +33,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { STRIPE_PRICES, PlanKey } from "@/lib/stripe-config";
 import { Loader2, CheckCircle, ArrowRight, LogIn, Crown, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { requestSchema, type RequestFormData } from "@/lib/request-validation";
+import { logger } from "@/lib/logger";
 
 export const PENDING_REQUEST_KEY = "pending_foia_request";
-
-const requestSchema = z.object({
-  agencyName: z
-    .string()
-    .trim()
-    .min(2, { message: "Agency name must be at least 2 characters" })
-    .max(200, { message: "Agency name must be less than 200 characters" }),
-  agencyType: z.string().min(1, { message: "Please select an agency type" }),
-  recordType: z.string().min(1, { message: "Please select a record type" }),
-  recordDescription: z
-    .string()
-    .trim()
-    .min(20, { message: "Please provide at least 20 characters describing what you're looking for" })
-    .max(2000, { message: "Description must be less than 2000 characters" }),
-});
-
-type RequestFormData = z.infer<typeof requestSchema>;
 
 const agencyTypes = [
   { value: "federal", label: "Federal Agency" },
@@ -187,7 +171,7 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
       if (countError) throw countError;
       setRequestCount(count || 0);
     } catch (error) {
-      console.error("Error checking subscription:", error);
+      logger.error("Error checking subscription:", error);
       setSubscription({ subscribed: false, product_id: null });
     } finally {
       setSubLoading(false);
@@ -228,7 +212,7 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
 
       if (insertError) throw insertError;
 
-      console.log("FOIA request created:", requestData.id);
+      logger.log("FOIA request created:", requestData.id);
 
       // Send confirmation email
       await supabase.functions.invoke("send-confirmation", {
@@ -239,7 +223,7 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
           recordType: recordTypeLabels[data.recordType] || data.recordType,
           requestId: requestData.id,
         },
-      }).catch(console.error);
+      }).catch((err) => logger.error("Email send error:", err));
 
       setIsSubmitting(false);
       setStep("success");
@@ -254,12 +238,12 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
         setStep("form");
         form.reset();
       }, 2500);
-    } catch (error: any) {
-      console.error("Error submitting request:", error);
+    } catch (error) {
+      logger.error("Error submitting request:", error);
       setIsSubmitting(false);
       toast({
         title: "Submission Failed",
-        description: error.message || "Something went wrong. Please try again.",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
     }
@@ -306,7 +290,7 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
         setStep("form");
       }
     } catch (error) {
-      console.error("Checkout error:", error);
+      logger.error("Checkout error:", error);
       toast({
         title: "Checkout Failed",
         description: "Failed to start checkout. Please try again.",

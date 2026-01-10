@@ -13,6 +13,7 @@ import {
   HardDrive,
   RefreshCw
 } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 interface SiteStats {
   totalRequests: number;
@@ -69,7 +70,7 @@ const AdminSettings = () => {
         totalDocuments: documents?.length || 0,
       });
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      logger.error('Error fetching stats:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch site statistics',

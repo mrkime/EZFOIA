@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Users, Shield, ShieldCheck, ShieldX } from 'lucide-react';
 import { format } from 'date-fns';
+import { logger } from '@/lib/logger';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,7 +82,7 @@ const AdminUsersTable = () => {
 
       setProfiles(enrichedProfiles);
     } catch (error) {
-      console.error('Error fetching profiles:', error);
+      logger.error('Error fetching profiles:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch user profiles',
@@ -131,7 +132,7 @@ const AdminUsersTable = () => {
         )
       );
     } catch (error) {
-      console.error('Error updating role:', error);
+      logger.error('Error updating role:', error);
       toast({
         title: 'Error',
         description: 'Failed to update user role',
