@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import AIChatbot from "@/components/help/AIChatbot";
 
 const HelpCenter = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -216,6 +217,7 @@ const HelpCenter = () => {
       </section>
 
       <Footer />
+      <AIChatbot />
     </div>
   );
 };
