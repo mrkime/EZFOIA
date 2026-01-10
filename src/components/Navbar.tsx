@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import RequestFormModal from "./RequestFormModal";
+import ThemeToggle from "./ThemeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -61,7 +63,11 @@ const Navbar = () => {
                       {user.user_metadata?.full_name || user.email?.split("@")[0]}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-card border-border">
+                  <DropdownMenuContent align="end" className="bg-card border-border w-48">
+                    <DropdownMenuItem asChild className="cursor-pointer p-0">
+                      <ThemeToggle />
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer">
                       <LogOut className="w-4 h-4" />
                       Sign Out

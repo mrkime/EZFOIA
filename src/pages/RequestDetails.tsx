@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
+import RequestTimeline from "@/components/RequestTimeline";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,8 @@ import {
   Building2,
   Calendar,
   FileType,
-  ScrollText
+  ScrollText,
+  Activity
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -366,6 +368,23 @@ const RequestDetails = () => {
                     </p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Timeline */}
+            <Card className="bg-card-gradient border-border">
+              <CardHeader>
+                <CardTitle className="font-display text-lg flex items-center gap-2">
+                  <Activity className="w-5 h-5" />
+                  Request Timeline
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RequestTimeline 
+                  currentStatus={request.status}
+                  createdAt={request.created_at}
+                  updatedAt={request.updated_at}
+                />
               </CardContent>
             </Card>
 
