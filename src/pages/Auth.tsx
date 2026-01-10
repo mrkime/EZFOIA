@@ -15,8 +15,9 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { FileText, Loader2, ArrowLeft, Mail, CheckCircle } from "lucide-react";
+import { FileText, Loader2, ArrowLeft, Mail, CheckCircle, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { motion, AnimatePresence } from "framer-motion";
 
 const signInSchema = z.object({
@@ -27,6 +28,7 @@ const signInSchema = z.object({
 const signUpSchema = z.object({
   fullName: z.string().trim().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().trim().email({ message: "Please enter a valid email" }),
+  phone: z.string().optional(),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -81,7 +83,7 @@ const Auth = () => {
 
   const signUpForm = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { fullName: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: { fullName: "", email: "", phone: "", password: "", confirmPassword: "" },
   });
 
   const forgotPasswordForm = useForm<ForgotPasswordFormData>({
@@ -116,7 +118,7 @@ const Auth = () => {
 
   const handleSignUp = async (data: SignUpFormData) => {
     setIsLoading(true);
-    const { error } = await signUp(data.email, data.password, data.fullName);
+    const { error } = await signUp(data.email, data.password, data.fullName, data.phone || undefined);
     setIsLoading(false);
 
     if (error) {
@@ -341,6 +343,30 @@ const Auth = () => {
                                   {...field}
                                 />
                               </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signUpForm.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-2">
+                                <Phone className="w-4 h-4" />
+                                Phone Number
+                                <span className="text-xs text-muted-foreground font-normal">(optional)</span>
+                              </FormLabel>
+                              <FormControl>
+                                <PhoneInput
+                                  value={field.value || ""}
+                                  onChange={field.onChange}
+                                  className="bg-card border-border"
+                                />
+                              </FormControl>
+                              <p className="text-xs text-muted-foreground">
+                                For SMS status updates on your requests
+                              </p>
                               <FormMessage />
                             </FormItem>
                           )}

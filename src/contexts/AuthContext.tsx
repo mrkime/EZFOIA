@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -53,10 +53,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -66,6 +66,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         },
       },
     });
+
+    // If sign-up succeeded and phone was provided, update the profile
+    if (!error && data.user && phone) {
+      await supabase.from("profiles").upsert({
+        user_id: data.user.id,
+        full_name: fullName,
+        phone,
+        sms_notifications: true,
+      }, { onConflict: "user_id" });
+    }
     
     return { error: error as Error | null };
   };
