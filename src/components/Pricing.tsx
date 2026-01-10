@@ -6,15 +6,16 @@ import { Check, ArrowRight, Loader2, Sparkles, Zap, Building2 } from "lucide-rea
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { STRIPE_PRICES, PlanKey } from "@/lib/stripe-config";
+import { STRIPE_PRICES, PlanKey, BillingPeriod } from "@/lib/stripe-config";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface Plan {
   name: string;
-  monthlyPrice: string;
-  annualPrice: string;
+  monthlyPrice: number;
+  annualPrice: number;
   period: string;
+  annualPeriod: string;
   description: string;
   features: string[];
   cta: string;
@@ -27,9 +28,10 @@ interface Plan {
 const plans: Plan[] = [
   {
     name: "Single Request",
-    monthlyPrice: "$75",
-    annualPrice: "$75",
+    monthlyPrice: 75,
+    annualPrice: 75,
     period: "per request",
+    annualPeriod: "per request",
     description: "Perfect for one-time FOIA requests",
     features: [
       "One FOIA request filed",
@@ -46,9 +48,10 @@ const plans: Plan[] = [
   },
   {
     name: "Professional",
-    monthlyPrice: "$200",
-    annualPrice: "$170",
+    monthlyPrice: 200,
+    annualPrice: 1920, // $160/mo billed annually ($200 * 12 * 0.8 = $1920)
     period: "per month",
+    annualPeriod: "per year",
     description: "For regular research and investigations",
     features: [
       "5 FOIA requests per month",
@@ -66,9 +69,10 @@ const plans: Plan[] = [
   },
   {
     name: "Enterprise",
-    monthlyPrice: "$500",
-    annualPrice: "$425",
+    monthlyPrice: 500,
+    annualPrice: 4800, // $400/mo billed annually ($500 * 12 * 0.8 = $4800)
     period: "per month",
+    annualPeriod: "per year",
     description: "For newsrooms and heavy users",
     features: [
       "Unlimited FOIA requests",
@@ -90,13 +94,14 @@ const plans: Plan[] = [
 interface PricingProps {
   showHeader?: boolean;
   className?: string;
+  initialBillingPeriod?: BillingPeriod;
 }
 
-const Pricing = ({ showHeader = true, className }: PricingProps) => {
+const Pricing = ({ showHeader = true, className, initialBillingPeriod = "monthly" }: PricingProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>(initialBillingPeriod);
 
   const handleCheckout = async (planKey: PlanKey) => {
     if (!user) {
@@ -108,9 +113,10 @@ const Pricing = ({ showHeader = true, className }: PricingProps) => {
     setLoadingPlan(planKey);
     try {
       const priceConfig = STRIPE_PRICES[planKey];
+      const periodConfig = priceConfig[billingPeriod];
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: { 
-          priceId: priceConfig.priceId, 
+          priceId: periodConfig.priceId, 
           mode: priceConfig.mode 
         },
       });
@@ -125,6 +131,19 @@ const Pricing = ({ showHeader = true, className }: PricingProps) => {
     } finally {
       setLoadingPlan(null);
     }
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price);
+  };
+
+  const getMonthlyEquivalent = (annualPrice: number) => {
+    return Math.round(annualPrice / 12);
   };
 
   const containerVariants = {
@@ -202,7 +221,7 @@ const Pricing = ({ showHeader = true, className }: PricingProps) => {
               >
                 Annual
                 <Badge className="absolute -top-3 -right-10 bg-emerald-500 text-white text-[10px] px-1.5 py-0.5">
-                  Save 15%
+                  Save 20%
                 </Badge>
               </button>
             </div>
@@ -218,7 +237,11 @@ const Pricing = ({ showHeader = true, className }: PricingProps) => {
         >
           {plans.map((plan, index) => {
             const IconComponent = plan.icon;
-            const displayPrice = billingPeriod === "annual" ? plan.annualPrice : plan.monthlyPrice;
+            const isAnnual = billingPeriod === "annual";
+            const displayPrice = isAnnual ? plan.annualPrice : plan.monthlyPrice;
+            const displayPeriod = isAnnual ? plan.annualPeriod : plan.period;
+            const monthlyEquivalent = isAnnual && plan.planKey !== "single" ? getMonthlyEquivalent(plan.annualPrice) : null;
+            const yearlySavings = plan.planKey !== "single" ? (plan.monthlyPrice * 12) - plan.annualPrice : 0;
             
             return (
               <motion.div
@@ -270,12 +293,22 @@ const Pricing = ({ showHeader = true, className }: PricingProps) => {
 
                 <div className="mb-8">
                   <div className="flex items-baseline gap-1">
-                    <span className="font-display text-4xl font-bold">{displayPrice}</span>
-                    <span className="text-muted-foreground">/{plan.period.replace("per ", "")}</span>
+                    <span className="font-display text-4xl font-bold">{formatPrice(displayPrice)}</span>
+                    <span className="text-muted-foreground">/{displayPeriod.replace("per ", "")}</span>
                   </div>
-                  {billingPeriod === "annual" && plan.planKey !== "single" && (
-                    <p className="text-sm text-emerald-500 mt-1">
-                      Save ${plan.planKey === "professional" ? "360" : "900"}/year
+                  {isAnnual && plan.planKey !== "single" && monthlyEquivalent && (
+                    <div className="mt-2 space-y-1">
+                      <p className="text-sm text-muted-foreground">
+                        {formatPrice(monthlyEquivalent)}/month billed annually
+                      </p>
+                      <p className="text-sm text-emerald-500 font-medium">
+                        Save {formatPrice(yearlySavings)}/year
+                      </p>
+                    </div>
+                  )}
+                  {!isAnnual && plan.planKey !== "single" && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      billed monthly
                     </p>
                   )}
                 </div>

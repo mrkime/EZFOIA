@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Check, ArrowRight, Loader2, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { STRIPE_PRICES, PlanKey } from "@/lib/stripe-config";
+import { STRIPE_PRICES, PlanKey, matchesPlan } from "@/lib/stripe-config";
 import { toast } from "sonner";
 
 interface Plan {
@@ -77,7 +77,7 @@ const UpgradePlanModal = ({ open, onOpenChange, currentPlanId }: UpgradePlanModa
       const priceConfig = STRIPE_PRICES[planKey];
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: {
-          priceId: priceConfig.priceId,
+          priceId: priceConfig.monthly.priceId,
           mode: priceConfig.mode,
         },
       });
@@ -97,7 +97,7 @@ const UpgradePlanModal = ({ open, onOpenChange, currentPlanId }: UpgradePlanModa
 
   const isPlanCurrent = (planKey: PlanKey) => {
     if (!currentPlanId) return false;
-    return STRIPE_PRICES[planKey].productId === currentPlanId;
+    return matchesPlan(currentPlanId, planKey);
   };
 
   return (

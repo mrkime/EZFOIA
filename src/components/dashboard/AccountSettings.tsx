@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { STRIPE_PRICES } from "@/lib/stripe-config";
+import { STRIPE_PRICES, matchesPlan } from "@/lib/stripe-config";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import UpgradePlanModal from "@/components/UpgradePlanModal";
@@ -42,13 +42,13 @@ interface ProfileData {
 const getPlanDetails = (productId: string | null) => {
   if (!productId) return { name: "Free", price: "$0", color: "bg-muted text-muted-foreground" };
   
-  if (productId === STRIPE_PRICES.single.productId) {
+  if (matchesPlan(productId, "single")) {
     return { name: "Single Request", price: "$75", color: "bg-primary/20 text-primary" };
   }
-  if (productId === STRIPE_PRICES.professional.productId) {
+  if (matchesPlan(productId, "professional")) {
     return { name: "Professional", price: "$200/mo", color: "bg-primary/20 text-primary" };
   }
-  if (productId === STRIPE_PRICES.enterprise.productId) {
+  if (matchesPlan(productId, "enterprise")) {
     return { name: "Enterprise", price: "$500/mo", color: "bg-amber-500/20 text-amber-400" };
   }
   return { name: "Active Plan", price: "", color: "bg-primary/20 text-primary" };
