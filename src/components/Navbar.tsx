@@ -1,21 +1,36 @@
 import { Button } from "@/components/ui/button";
-import { FileText, Menu, X } from "lucide-react";
+import { FileText, Menu, X, LogOut, User } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
 import RequestFormModal from "./RequestFormModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut, loading } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
               <FileText className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="font-display text-xl font-bold">EZFOIA</span>
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
@@ -31,10 +46,36 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost">Sign In</Button>
-            <RequestFormModal>
-              <Button variant="hero">Get Started</Button>
-            </RequestFormModal>
+            {loading ? null : user ? (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="gap-2">
+                      <User className="w-4 h-4" />
+                      {user.user_metadata?.full_name || user.email?.split("@")[0]}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-card border-border">
+                    <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer">
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <RequestFormModal>
+                  <Button variant="hero">New Request</Button>
+                </RequestFormModal>
+              </>
+            ) : (
+              <>
+                <Link to="/auth">
+                  <Button variant="ghost">Sign In</Button>
+                </Link>
+                <RequestFormModal>
+                  <Button variant="hero">Get Started</Button>
+                </RequestFormModal>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -60,10 +101,26 @@ const Navbar = () => {
                 Pricing
               </a>
               <div className="flex flex-col gap-2 pt-4">
-                <Button variant="ghost">Sign In</Button>
-                <RequestFormModal>
-                  <Button variant="hero">Get Started</Button>
-                </RequestFormModal>
+                {loading ? null : user ? (
+                  <>
+                    <Button variant="ghost" onClick={handleSignOut} className="gap-2 justify-start">
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </Button>
+                    <RequestFormModal>
+                      <Button variant="hero">New Request</Button>
+                    </RequestFormModal>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/auth">
+                      <Button variant="ghost" className="w-full">Sign In</Button>
+                    </Link>
+                    <RequestFormModal>
+                      <Button variant="hero">Get Started</Button>
+                    </RequestFormModal>
+                  </>
+                )}
               </div>
             </div>
           </div>
