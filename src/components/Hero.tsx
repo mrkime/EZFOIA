@@ -160,10 +160,55 @@ const Hero = () => {
             style={{ y: contentY, animationDelay: '0.3s' }}
           >
             <RequestFormModal>
-              <Button variant="hero" size="xl">
-                Start Your Request
-                <ArrowRight className="w-5 h-5" />
-              </Button>
+              <motion.div
+                className="relative group cursor-pointer"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {/* Ripple border effect */}
+                <motion.div
+                  className="absolute -inset-[2px] rounded-xl bg-gradient-to-r from-primary via-primary/50 to-primary opacity-75"
+                  animate={{
+                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: 'linear',
+                  }}
+                  style={{ backgroundSize: '200% 200%' }}
+                />
+                {/* Outer ripple pulse */}
+                <motion.div
+                  className="absolute -inset-1 rounded-xl bg-primary/30 blur-sm"
+                  animate={{
+                    scale: [1, 1.05, 1],
+                    opacity: [0.5, 0.8, 0.5],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                />
+                <Button variant="hero" size="xl" className="relative">
+                  <span>Start Your Request</span>
+                  {/* Animated arrow */}
+                  <motion.span
+                    className="inline-flex"
+                    animate={{
+                      x: [0, 4, 0],
+                    }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                  >
+                    <ArrowRight className="w-5 h-5" />
+                  </motion.span>
+                </Button>
+              </motion.div>
             </RequestFormModal>
             <Button variant="heroOutline" size="xl" onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>
               See How It Works
