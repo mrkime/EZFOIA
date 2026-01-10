@@ -114,12 +114,19 @@ const PricingPage = () => {
       {/* Billing Toggle */}
       <div className="container mx-auto px-6 pt-12">
         <motion.div 
-          className="flex items-center justify-center gap-2"
+          className="flex items-center justify-center"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
           <div className="relative bg-muted/50 rounded-full p-1 flex items-center">
+            {/* Sticker Badge */}
+            <Badge 
+              className="absolute -top-3 -right-3 bg-emerald-500 text-white text-[10px] px-2 py-0.5 shadow-lg rotate-12 z-20 border-0"
+            >
+              Save 20%
+            </Badge>
+            
             <motion.div
               className="absolute inset-y-1 bg-primary rounded-full"
               initial={false}
@@ -153,20 +160,6 @@ const PricingPage = () => {
               Annual
             </button>
           </div>
-          <AnimatePresence mode="wait">
-            {billingPeriod === "annual" && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8, x: -10 }}
-                animate={{ opacity: 1, scale: 1, x: 0 }}
-                exit={{ opacity: 0, scale: 0.8, x: -10 }}
-                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              >
-                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30">
-                  Save 20%
-                </Badge>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
       </div>
 
