@@ -3,6 +3,7 @@ import { AnimatePresence } from "framer-motion";
 import PageTransition from "./PageTransition";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
+import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import RequestDetails from "@/pages/RequestDetails";
 import About from "@/pages/About";
@@ -30,6 +31,7 @@ const AnimatedRoutes = () => {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
+        <Route path="/auth/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
         <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
         <Route path="/dashboard/request/:requestId" element={<PageTransition><RequestDetails /></PageTransition>} />
         <Route path="/admin" element={<PageTransition><AdminDashboard /></PageTransition>} />

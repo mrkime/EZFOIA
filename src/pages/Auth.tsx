@@ -15,8 +15,9 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { FileText, Loader2, ArrowLeft } from "lucide-react";
+import { FileText, Loader2, ArrowLeft, Mail, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 const signInSchema = z.object({
   email: z.string().trim().email({ message: "Please enter a valid email" }),
@@ -33,8 +34,15 @@ const signUpSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().trim().email({ message: "Please enter a valid email" }),
+});
+
 type SignInFormData = z.infer<typeof signInSchema>;
 type SignUpFormData = z.infer<typeof signUpSchema>;
+type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+
+type AuthView = "signIn" | "signUp" | "forgotPassword";
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -58,10 +66,11 @@ const GoogleIcon = () => (
 );
 
 const Auth = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [view, setView] = useState<AuthView>("signIn");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const { signIn, signUp, signInWithGoogle, user, loading } = useAuth();
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const { signIn, signUp, signInWithGoogle, resetPassword, user, loading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -73,6 +82,11 @@ const Auth = () => {
   const signUpForm = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: { fullName: "", email: "", password: "", confirmPassword: "" },
+  });
+
+  const forgotPasswordForm = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: "" },
   });
 
   useEffect(() => {
@@ -119,6 +133,22 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (data: ForgotPasswordFormData) => {
+    setIsLoading(true);
+    const { error } = await resetPassword(data.email);
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        title: "Request Failed",
+        description: "Could not send reset email. Please check your email and try again.",
+        variant: "destructive",
+      });
+    } else {
+      setResetEmailSent(true);
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     const { error } = await signInWithGoogle();
@@ -133,6 +163,14 @@ const Auth = () => {
     }
   };
 
+  const switchView = (newView: AuthView) => {
+    setView(newView);
+    setResetEmailSent(false);
+    signInForm.reset();
+    signUpForm.reset();
+    forgotPasswordForm.reset();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -140,6 +178,28 @@ const Auth = () => {
       </div>
     );
   }
+
+  const getTitle = () => {
+    switch (view) {
+      case "signUp":
+        return "Create an account";
+      case "forgotPassword":
+        return "Reset your password";
+      default:
+        return "Welcome back";
+    }
+  };
+
+  const getSubtitle = () => {
+    switch (view) {
+      case "signUp":
+        return "Start making FOIA requests in minutes";
+      case "forgotPassword":
+        return "Enter your email and we'll send you a reset link";
+      default:
+        return "Sign in to track your FOIA requests";
+    }
+  };
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -174,183 +234,269 @@ const Auth = () => {
             Back to home
           </Link>
 
-          <div className="mb-8">
-            <h2 className="font-display text-3xl font-bold mb-2">
-              {isSignUp ? "Create an account" : "Welcome back"}
-            </h2>
-            <p className="text-muted-foreground">
-              {isSignUp
-                ? "Start making FOIA requests in minutes"
-                : "Sign in to track your FOIA requests"}
-            </p>
-          </div>
-
-          {/* Google Sign In Button */}
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            className="w-full mb-6 gap-3"
-            onClick={handleGoogleSignIn}
-            disabled={isGoogleLoading}
-          >
-            {isGoogleLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                <GoogleIcon />
-                Continue with Google
-              </>
-            )}
-          </Button>
-
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
-            </div>
-          </div>
-
-          {isSignUp ? (
-            <Form {...signUpForm} key="signup-form">
-              <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
-                <FormField
-                  control={signUpForm.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="John Doe" 
-                          className="bg-card border-border" 
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={signUpForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="email" 
-                          placeholder="john@example.com" 
-                          className="bg-card border-border" 
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={signUpForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="password" 
-                          placeholder="••••••••" 
-                          className="bg-card border-border" 
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={signUpForm.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="password" 
-                          placeholder="••••••••" 
-                          className="bg-card border-border" 
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" variant="hero" size="lg" className="w-full" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create Account"}
-                </Button>
-              </form>
-            </Form>
-          ) : (
-            <Form {...signInForm} key="signin-form">
-              <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
-                <FormField
-                  control={signInForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="email" 
-                          placeholder="john@example.com" 
-                          className="bg-card border-border" 
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={signInForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="password" 
-                          placeholder="••••••••" 
-                          className="bg-card border-border" 
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" variant="hero" size="lg" className="w-full" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
-                </Button>
-              </form>
-            </Form>
-          )}
-
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                signInForm.reset();
-                signUpForm.reset();
-              }}
-              className="text-primary hover:underline"
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={view + (resetEmailSent ? "-sent" : "")}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
             >
-              {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
-            </button>
-          </div>
+              {/* Forgot Password - Email Sent Success */}
+              {view === "forgotPassword" && resetEmailSent ? (
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
+                    <Mail className="w-8 h-8 text-emerald-500" />
+                  </div>
+                  <h2 className="font-display text-3xl font-bold mb-2">Check your email</h2>
+                  <p className="text-muted-foreground mb-6">
+                    We've sent a password reset link to<br />
+                    <span className="text-foreground font-medium">{forgotPasswordForm.getValues("email")}</span>
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-8">
+                    Didn't receive the email? Check your spam folder or{" "}
+                    <button
+                      type="button"
+                      onClick={() => setResetEmailSent(false)}
+                      className="text-primary hover:underline"
+                    >
+                      try again
+                    </button>
+                  </p>
+                  <Button variant="outline" onClick={() => switchView("signIn")}>
+                    Back to Sign In
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-8">
+                    <h2 className="font-display text-3xl font-bold mb-2">{getTitle()}</h2>
+                    <p className="text-muted-foreground">{getSubtitle()}</p>
+                  </div>
+
+                  {/* Google Sign In Button - Hide on forgot password */}
+                  {view !== "forgotPassword" && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        className="w-full mb-6 gap-3"
+                        onClick={handleGoogleSignIn}
+                        disabled={isGoogleLoading}
+                      >
+                        {isGoogleLoading ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <>
+                            <GoogleIcon />
+                            Continue with Google
+                          </>
+                        )}
+                      </Button>
+
+                      <div className="relative mb-6">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-border" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Sign Up Form */}
+                  {view === "signUp" && (
+                    <Form {...signUpForm} key="signup-form">
+                      <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
+                        <FormField
+                          control={signUpForm.control}
+                          name="fullName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Full Name</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="John Doe" 
+                                  className="bg-card border-border" 
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signUpForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="email" 
+                                  placeholder="john@example.com" 
+                                  className="bg-card border-border" 
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signUpForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Password</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="password" 
+                                  placeholder="••••••••" 
+                                  className="bg-card border-border" 
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signUpForm.control}
+                          name="confirmPassword"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Confirm Password</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="password" 
+                                  placeholder="••••••••" 
+                                  className="bg-card border-border" 
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button type="submit" variant="hero" size="lg" className="w-full" disabled={isLoading}>
+                          {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create Account"}
+                        </Button>
+                      </form>
+                    </Form>
+                  )}
+
+                  {/* Sign In Form */}
+                  {view === "signIn" && (
+                    <Form {...signInForm} key="signin-form">
+                      <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
+                        <FormField
+                          control={signInForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="email" 
+                                  placeholder="john@example.com" 
+                                  className="bg-card border-border" 
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signInForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center justify-between">
+                                <FormLabel>Password</FormLabel>
+                                <button
+                                  type="button"
+                                  onClick={() => switchView("forgotPassword")}
+                                  className="text-sm text-primary hover:underline"
+                                >
+                                  Forgot password?
+                                </button>
+                              </div>
+                              <FormControl>
+                                <Input 
+                                  type="password" 
+                                  placeholder="••••••••" 
+                                  className="bg-card border-border" 
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button type="submit" variant="hero" size="lg" className="w-full" disabled={isLoading}>
+                          {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
+                        </Button>
+                      </form>
+                    </Form>
+                  )}
+
+                  {/* Forgot Password Form */}
+                  {view === "forgotPassword" && (
+                    <Form {...forgotPasswordForm} key="forgot-password-form">
+                      <form onSubmit={forgotPasswordForm.handleSubmit(handleForgotPassword)} className="space-y-4">
+                        <FormField
+                          control={forgotPasswordForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="email" 
+                                  placeholder="john@example.com" 
+                                  className="bg-card border-border" 
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button type="submit" variant="hero" size="lg" className="w-full" disabled={isLoading}>
+                          {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Send Reset Link"}
+                        </Button>
+                      </form>
+                    </Form>
+                  )}
+
+                  {/* Footer Links */}
+                  <div className="mt-6 text-center">
+                    {view === "forgotPassword" ? (
+                      <button
+                        type="button"
+                        onClick={() => switchView("signIn")}
+                        className="text-primary hover:underline"
+                      >
+                        Back to Sign In
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => switchView(view === "signUp" ? "signIn" : "signUp")}
+                        className="text-primary hover:underline"
+                      >
+                        {view === "signUp" ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </div>
