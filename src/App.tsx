@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import AnimatedRoutes from "@/components/AnimatedRoutes";
 import CookieConsent from "@/components/CookieConsent";
+import GlobalAIChatbot from "@/components/GlobalAIChatbot";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
           <ScrollToTop />
           <AnimatedRoutes />
           <CookieConsent />
+          <GlobalAIChatbot />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
