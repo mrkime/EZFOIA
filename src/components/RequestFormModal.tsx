@@ -30,7 +30,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { STRIPE_PRICES, PlanKey } from "@/lib/stripe-config";
+import { STRIPE_PRICES, PlanKey, matchesPlan } from "@/lib/stripe-config";
 import { Loader2, CheckCircle, ArrowRight, LogIn, Crown, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { requestSchema, type RequestFormData } from "@/lib/request-validation";
@@ -76,9 +76,9 @@ interface SubscriptionData {
 
 const getRequestLimit = (productId: string | null): number => {
   if (!productId) return 0;
-  if (productId === STRIPE_PRICES.single.productId) return 1;
-  if (productId === STRIPE_PRICES.professional.productId) return 5;
-  if (productId === STRIPE_PRICES.enterprise.productId) return -1; // unlimited
+  if (matchesPlan(productId, "single")) return 1;
+  if (matchesPlan(productId, "professional")) return 5;
+  if (matchesPlan(productId, "enterprise")) return -1; // unlimited
   return 0;
 };
 
@@ -278,7 +278,7 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
       const priceConfig = STRIPE_PRICES[planKey];
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: {
-          priceId: priceConfig.priceId,
+          priceId: priceConfig.monthly.priceId,
           mode: priceConfig.mode,
         },
       });

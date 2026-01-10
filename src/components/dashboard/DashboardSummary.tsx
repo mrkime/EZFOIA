@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreditCard, Crown, FileText, Clock, CheckCircle, Loader2, ExternalLink, RefreshCw } from "lucide-react";
-import { STRIPE_PRICES } from "@/lib/stripe-config";
+import { STRIPE_PRICES, matchesPlan } from "@/lib/stripe-config";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -30,13 +30,13 @@ interface DashboardSummaryProps {
 const getPlanDetails = (productId: string | null) => {
   if (!productId) return { name: "Free", color: "bg-muted text-muted-foreground", requestLimit: 0 };
   
-  if (productId === STRIPE_PRICES.single.productId) {
+  if (matchesPlan(productId, "single")) {
     return { name: "Single Request", color: "bg-primary/20 text-primary", requestLimit: 1 };
   }
-  if (productId === STRIPE_PRICES.professional.productId) {
+  if (matchesPlan(productId, "professional")) {
     return { name: "Professional", color: "bg-primary/20 text-primary", requestLimit: 10 };
   }
-  if (productId === STRIPE_PRICES.enterprise.productId) {
+  if (matchesPlan(productId, "enterprise")) {
     return { name: "Enterprise", color: "bg-amber-500/20 text-amber-400", requestLimit: -1 }; // unlimited
   }
   return { name: "Active Plan", color: "bg-primary/20 text-primary", requestLimit: 1 };
