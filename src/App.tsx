@@ -14,6 +14,13 @@ import FeaturesPage from "./pages/FeaturesPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
+import ApiAccess from "./pages/ApiAccess";
+import FoiaGuide from "./pages/FoiaGuide";
+import Blog from "./pages/Blog";
+import HelpCenter from "./pages/HelpCenter";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
+import CookiePolicy from "./pages/CookiePolicy";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +41,13 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/features" element={<FeaturesPage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/api-access" element={<ApiAccess />} />
+            <Route path="/foia-guide" element={<FoiaGuide />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/help" element={<HelpCenter />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/cookies" element={<CookiePolicy />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
