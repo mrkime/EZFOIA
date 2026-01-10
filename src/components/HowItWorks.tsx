@@ -78,11 +78,7 @@ const StepCard = ({ step, index }: { step: typeof steps[0]; index: number }) => 
 
         {/* Step number with animated ring */}
         <div className="relative flex items-center gap-4 mb-6">
-          <motion.div
-            className="relative"
-            animate={{ rotate: isHovered ? 360 : 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-          >
+          <div className="relative">
             {/* Outer ring */}
             <motion.div
               className="absolute inset-0 rounded-xl border-2 border-primary/30"
@@ -101,7 +97,7 @@ const StepCard = ({ step, index }: { step: typeof steps[0]; index: number }) => 
             >
               <step.icon className="w-7 h-7 text-primary" />
             </motion.div>
-          </motion.div>
+          </div>
 
           {/* Step number with pulse effect */}
           <motion.span
