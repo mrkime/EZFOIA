@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PageHeader from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,22 +71,13 @@ const Blog = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      {/* Hero */}
-      <section className="pt-32 pb-16 px-6">
-        <div className="container mx-auto max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
-            <BookOpen className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">EZFOIA Blog</span>
-          </div>
-          <h1 className="font-display text-4xl md:text-5xl font-bold mb-6">
-            Insights & Resources
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Expert guides, industry news, and tips to help you navigate the world of 
-            public records and government transparency.
-          </p>
-        </div>
-      </section>
+      <PageHeader
+        badge="EZFOIA Blog"
+        badgeIcon={BookOpen}
+        title="Insights &"
+        titleHighlight="Resources"
+        description="Expert guides, industry news, and tips to help you navigate the world of public records and government transparency."
+      />
 
       {loading ? (
         <section className="py-8 px-6">

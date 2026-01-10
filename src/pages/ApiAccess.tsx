@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Code, Zap, Shield, BookOpen, Terminal, Webhook } from "lucide-react";
@@ -35,31 +36,23 @@ const ApiAccess = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      {/* Hero Section */}
-      <section className="pt-32 pb-16 px-6">
-        <div className="container mx-auto max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
-            <Code className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Developer API</span>
-          </div>
-          <h1 className="font-display text-4xl md:text-5xl font-bold mb-6">
-            Build with the EZFOIA API
-          </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Integrate FOIA request capabilities directly into your applications with our 
-            powerful REST API. Perfect for journalists, researchers, and legal teams.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="hero" size="lg">
-              <BookOpen className="w-5 h-5 mr-2" />
-              View Documentation
-            </Button>
-            <Button variant="outline" size="lg">
-              Get API Key
-            </Button>
-          </div>
+      <PageHeader
+        badge="Developer API"
+        badgeIcon={Code}
+        title="Build with the"
+        titleHighlight="EZFOIA API"
+        description="Integrate FOIA request capabilities directly into your applications with our powerful REST API. Perfect for journalists, researchers, and legal teams."
+      >
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button variant="hero" size="lg">
+            <BookOpen className="w-5 h-5 mr-2" />
+            View Documentation
+          </Button>
+          <Button variant="outline" size="lg">
+            Get API Key
+          </Button>
         </div>
-      </section>
+      </PageHeader>
 
       {/* Features */}
       <section className="py-16 px-6 bg-muted/30">

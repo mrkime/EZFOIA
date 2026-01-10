@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PageHeader from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, FileText, Clock, CheckCircle, AlertCircle, HelpCircle, Scale, Building2 } from "lucide-react";
@@ -42,22 +43,13 @@ const FoiaGuide = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      {/* Hero */}
-      <section className="pt-32 pb-16 px-6">
-        <div className="container mx-auto max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
-            <BookOpen className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Complete Guide</span>
-          </div>
-          <h1 className="font-display text-4xl md:text-5xl font-bold mb-6">
-            Understanding FOIA Requests
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            The Freedom of Information Act gives you the right to access records from any federal agency. 
-            Learn how to exercise this right effectively.
-          </p>
-        </div>
-      </section>
+      <PageHeader
+        badge="Complete Guide"
+        badgeIcon={BookOpen}
+        title="Understanding"
+        titleHighlight="FOIA Requests"
+        description="The Freedom of Information Act gives you the right to access records from any federal agency. Learn how to exercise this right effectively."
+      />
 
       {/* What is FOIA */}
       <section className="py-16 px-6 bg-muted/30">
