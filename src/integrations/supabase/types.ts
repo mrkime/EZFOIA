@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      foia_documents: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          request_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          request_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foia_documents_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "foia_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       foia_requests: {
         Row: {
           agency_name: string

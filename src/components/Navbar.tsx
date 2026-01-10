@@ -48,6 +48,9 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-4">
             {loading ? null : user ? (
               <>
+                <Link to="/dashboard">
+                  <Button variant="ghost">Dashboard</Button>
+                </Link>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="gap-2">
@@ -103,6 +106,9 @@ const Navbar = () => {
               <div className="flex flex-col gap-2 pt-4">
                 {loading ? null : user ? (
                   <>
+                    <Link to="/dashboard" className="w-full">
+                      <Button variant="ghost" className="w-full justify-start">Dashboard</Button>
+                    </Link>
                     <Button variant="ghost" onClick={handleSignOut} className="gap-2 justify-start">
                       <LogOut className="w-4 h-4" />
                       Sign Out
