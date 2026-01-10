@@ -121,25 +121,29 @@ const CTA = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {/* Ripple border effect */}
+                {/* Water ripple rings */}
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute inset-0 rounded-xl border border-primary/40"
+                    initial={{ scale: 1, opacity: 0.6 }}
+                    animate={{
+                      scale: [1, 1.15, 1.3],
+                      opacity: [0.5, 0.25, 0],
+                    }}
+                    transition={{
+                      duration: 2.5,
+                      repeat: Infinity,
+                      delay: i * 0.8,
+                      ease: [0.25, 0.1, 0.25, 1],
+                    }}
+                  />
+                ))}
+                {/* Subtle inner glow */}
                 <motion.div
-                  className="absolute -inset-[2px] rounded-xl bg-gradient-to-r from-primary via-primary/50 to-primary opacity-75"
+                  className="absolute -inset-[1px] rounded-xl bg-primary/20"
                   animate={{
-                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: 'linear',
-                  }}
-                  style={{ backgroundSize: '200% 200%' }}
-                />
-                {/* Outer ripple pulse */}
-                <motion.div
-                  className="absolute -inset-1 rounded-xl bg-primary/30 blur-sm"
-                  animate={{
-                    scale: [1, 1.05, 1],
-                    opacity: [0.5, 0.8, 0.5],
+                    opacity: [0.3, 0.5, 0.3],
                   }}
                   transition={{
                     duration: 2,
