@@ -71,47 +71,44 @@ const getStatusColor = (status: string): string => {
   }
 };
 
-const sendTwilioSMS = async (to: string, message: string): Promise<boolean> => {
-  const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
-  const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
-  const fromNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
+const sendMessageBirdSMS = async (to: string, message: string): Promise<boolean> => {
+  const apiKey = Deno.env.get("MESSAGEBIRD_API_KEY");
   
-  if (!accountSid || !authToken || !fromNumber) {
-    logStep("Twilio not configured, skipping SMS");
+  if (!apiKey) {
+    logStep("MessageBird not configured, skipping SMS");
     return false;
   }
   
-  // Format phone number - ensure it has country code
-  const formattedTo = to.startsWith('+') ? to : `+1${to.replace(/\D/g, '')}`;
+  // Format phone number - ensure it has country code (digits only)
+  const formattedTo = to.startsWith('+') 
+    ? to.replace(/\D/g, '') 
+    : `1${to.replace(/\D/g, '')}`;
   
   try {
-    const response = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Basic ${btoa(`${accountSid}:${authToken}`)}`,
-        },
-        body: new URLSearchParams({
-          To: formattedTo,
-          From: fromNumber,
-          Body: message,
-        }),
-      }
-    );
+    const response = await fetch("https://rest.messagebird.com/messages", {
+      method: "POST",
+      headers: {
+        "Authorization": `AccessKey ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        originator: "EZFOIA",
+        recipients: [formattedTo],
+        body: message,
+      }),
+    });
     
     if (!response.ok) {
       const errorData = await response.text();
-      logStep("Twilio SMS failed", { status: response.status, error: errorData });
+      logStep("MessageBird SMS failed", { status: response.status, error: errorData });
       return false;
     }
     
     const data = await response.json();
-    logStep("Twilio SMS sent successfully", { sid: data.sid });
+    logStep("MessageBird SMS sent successfully", { id: data.id });
     return true;
   } catch (error) {
-    logStep("Twilio SMS error", { error: error instanceof Error ? error.message : String(error) });
+    logStep("MessageBird SMS error", { error: error instanceof Error ? error.message : String(error) });
     return false;
   }
 };
@@ -217,7 +214,7 @@ const handler = async (req: Request): Promise<Response> => {
           ? "Your documents are ready for download!" 
           : "Log in to view details."
       }`;
-      smsSent = await sendTwilioSMS(profile.phone, smsMessage);
+      smsSent = await sendMessageBirdSMS(profile.phone, smsMessage);
     }
 
     // Send notification email
