@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import RequestFormModal from "./RequestFormModal";
 
 const AnimatedGrid = () => {
@@ -170,9 +171,11 @@ const CTA = () => {
                 </Button>
               </motion.div>
             </RequestFormModal>
-            <Button variant="heroOutline" size="xl">
-              Talk to Our Team
-            </Button>
+            <Link to="/contact">
+              <Button variant="heroOutline" size="xl">
+                Talk to Our Team
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

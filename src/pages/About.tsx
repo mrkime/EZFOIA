@@ -1,7 +1,9 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageHeader from "@/components/PageHeader";
-import { Shield, Target, Heart, Users, Globe, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { Shield, Target, Heart, Users, Globe, Info, ArrowRight } from "lucide-react";
 
 const values = [
   {
@@ -169,6 +171,19 @@ const About = () => {
               Whether you're a journalist, researcher, or curious citizen—we're here to help you 
               access the information you need.
             </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/contact">
+                <Button variant="hero" size="lg" className="gap-2">
+                  Get in Touch
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+              <Link to="/foia-guide">
+                <Button variant="outline" size="lg">
+                  Learn About FOIA
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
