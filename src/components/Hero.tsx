@@ -129,11 +129,34 @@ const Hero = () => {
         >
           {/* Badge */}
           <motion.div 
-            className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-8 animate-fade-in"
+            className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-8 animate-fade-in relative overflow-hidden"
             style={{ y: badgeY }}
+            animate={{
+              boxShadow: [
+                '0 0 0 0 hsl(var(--primary) / 0)',
+                '0 0 8px 2px hsl(var(--primary) / 0.15)',
+                '0 0 0 0 hsl(var(--primary) / 0)',
+              ],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
           >
-            <Shield className="w-4 h-4 text-primary" />
-            <span className="text-sm text-muted-foreground">Powered by ClearSightAI</span>
+            {/* Subtle shimmer effect */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent"
+              animate={{ x: ['-100%', '100%'] }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: 'linear',
+                repeatDelay: 2,
+              }}
+            />
+            <Shield className="w-4 h-4 text-primary relative z-10" />
+            <span className="text-sm text-muted-foreground relative z-10">Powered by ClearSightAI</span>
           </motion.div>
 
           {/* Headline */}
