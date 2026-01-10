@@ -29,7 +29,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, ArrowRight } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2, CheckCircle, ArrowRight, LogIn } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const requestSchema = z.object({
   agencyName: z
@@ -44,22 +47,6 @@ const requestSchema = z.object({
     .trim()
     .min(20, { message: "Please provide at least 20 characters describing what you're looking for" })
     .max(2000, { message: "Description must be less than 2000 characters" }),
-  fullName: z
-    .string()
-    .trim()
-    .min(2, { message: "Name must be at least 2 characters" })
-    .max(100, { message: "Name must be less than 100 characters" }),
-  email: z
-    .string()
-    .trim()
-    .email({ message: "Please enter a valid email address" })
-    .max(255, { message: "Email must be less than 255 characters" }),
-  phone: z
-    .string()
-    .trim()
-    .min(10, { message: "Please enter a valid phone number" })
-    .max(20, { message: "Phone number must be less than 20 characters" })
-    .regex(/^[+]?[\d\s\-()]+$/, { message: "Please enter a valid phone number" }),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
@@ -84,6 +71,17 @@ const recordTypes = [
   { value: "other", label: "Other Documents" },
 ];
 
+const recordTypeLabels: Record<string, string> = {
+  emails: "Emails & Correspondence",
+  contracts: "Contracts & Agreements",
+  "meeting-minutes": "Meeting Minutes",
+  financial: "Financial Records",
+  personnel: "Personnel Records",
+  policies: "Policies & Procedures",
+  "incident-reports": "Incident Reports",
+  other: "Other Documents",
+};
+
 interface RequestFormModalProps {
   children: React.ReactNode;
 }
@@ -93,6 +91,8 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestSchema),
@@ -101,35 +101,82 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
       agencyType: "",
       recordType: "",
       recordDescription: "",
-      fullName: "",
-      email: "",
-      phone: "",
     },
   });
 
   const onSubmit = async (data: RequestFormData) => {
+    if (!user) {
+      toast({
+        title: "Please sign in",
+        description: "You need to be signed in to submit a FOIA request.",
+        variant: "destructive",
+      });
+      setOpen(false);
+      navigate("/auth");
+      return;
+    }
+
     setIsSubmitting(true);
     
-    // Simulate API call - replace with actual backend integration
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    // Log sanitized confirmation (no sensitive data)
-    console.log("Request submitted successfully");
-    
-    setIsSubmitting(false);
-    setIsSuccess(true);
-    
-    toast({
-      title: "Request Submitted!",
-      description: "We'll start processing your FOIA request right away.",
-    });
+    try {
+      // Insert the request into the database
+      const { data: requestData, error: insertError } = await supabase
+        .from("foia_requests")
+        .insert({
+          user_id: user.id,
+          agency_name: data.agencyName,
+          agency_type: data.agencyType,
+          record_type: data.recordType,
+          record_description: data.recordDescription,
+        })
+        .select()
+        .single();
 
-    // Reset after showing success
-    setTimeout(() => {
-      setOpen(false);
-      setIsSuccess(false);
-      form.reset();
-    }, 2000);
+      if (insertError) {
+        throw insertError;
+      }
+
+      console.log("FOIA request created:", requestData.id);
+
+      // Send confirmation email
+      const { error: emailError } = await supabase.functions.invoke("send-confirmation", {
+        body: {
+          to: user.email,
+          name: user.user_metadata?.full_name || "Valued Customer",
+          agencyName: data.agencyName,
+          recordType: recordTypeLabels[data.recordType] || data.recordType,
+          requestId: requestData.id,
+        },
+      });
+
+      if (emailError) {
+        console.error("Email error:", emailError);
+        // Don't fail the whole request if email fails
+      }
+
+      setIsSubmitting(false);
+      setIsSuccess(true);
+      
+      toast({
+        title: "Request Submitted!",
+        description: "Check your email for confirmation details.",
+      });
+
+      // Reset after showing success
+      setTimeout(() => {
+        setOpen(false);
+        setIsSuccess(false);
+        form.reset();
+      }, 2500);
+    } catch (error: any) {
+      console.error("Error submitting request:", error);
+      setIsSubmitting(false);
+      toast({
+        title: "Submission Failed",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -142,6 +189,42 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
     }
   };
 
+  // If not logged in, show a sign-in prompt
+  if (!user && open) {
+    return (
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>{children}</DialogTrigger>
+        <DialogContent className="sm:max-w-[450px] bg-card border-border">
+          <div className="py-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
+              <LogIn className="w-8 h-8 text-primary" />
+            </div>
+            <h3 className="font-display text-2xl font-bold mb-2">Sign In Required</h3>
+            <p className="text-muted-foreground mb-6">
+              Please sign in or create an account to submit a FOIA request.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button
+                variant="hero"
+                size="lg"
+                onClick={() => {
+                  setOpen(false);
+                  navigate("/auth");
+                }}
+              >
+                Sign In / Sign Up
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+              <Button variant="ghost" onClick={() => setOpen(false)}>
+                Maybe Later
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -153,7 +236,7 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
             </div>
             <h3 className="font-display text-2xl font-bold mb-2">Request Submitted!</h3>
             <p className="text-muted-foreground">
-              We'll send you a confirmation email with tracking details shortly.
+              We've sent a confirmation email with tracking details.
             </p>
           </div>
         ) : (
@@ -265,71 +348,6 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
                       </FormItem>
                     )}
                   />
-                </div>
-
-                {/* Contact Information */}
-                <div className="space-y-4">
-                  <h4 className="font-display font-semibold text-sm text-primary uppercase tracking-wider">
-                    Your Contact Information
-                  </h4>
-
-                  <FormField
-                    control={form.control}
-                    name="fullName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="John Doe"
-                            className="bg-background border-border"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email Address</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="email"
-                              placeholder="john@example.com"
-                              className="bg-background border-border"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="tel"
-                              placeholder="(555) 123-4567"
-                              className="bg-background border-border"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
                 </div>
 
                 {/* Pricing Note */}
