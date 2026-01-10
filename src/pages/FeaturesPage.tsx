@@ -192,31 +192,35 @@ const FeaturesPage = () => {
         </div>
       </section>
 
-      {/* Capabilities Stats */}
-      <section className="py-16 border-y border-border bg-card/50">
+      {/* Stats Banner */}
+      <section className="py-12 relative overflow-hidden">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {capabilities.map((cap, index) => (
-              <motion.div 
-                key={cap.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="text-center"
-              >
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <cap.icon className="w-6 h-6 text-primary" />
-                </div>
-                <div className="flex items-baseline justify-center gap-1 mb-1">
-                  <span className="font-display text-3xl md:text-4xl font-bold text-primary">{cap.stat}</span>
-                  <span className="text-muted-foreground text-sm">{cap.statLabel}</span>
-                </div>
-                <h3 className="font-semibold mb-1">{cap.title}</h3>
-                <p className="text-muted-foreground text-sm">{cap.description}</p>
-              </motion.div>
-            ))}
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="relative rounded-2xl bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border border-primary/20 p-8 md:p-10"
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.1)_0%,transparent_70%)]" />
+            <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+              {capabilities.map((cap, index) => (
+                <motion.div 
+                  key={cap.title}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="text-center group"
+                >
+                  <div className="flex items-baseline justify-center gap-1 mb-2">
+                    <span className="font-display text-4xl md:text-5xl font-bold text-primary group-hover:scale-110 transition-transform">{cap.stat}</span>
+                    <span className="text-muted-foreground text-sm font-medium">{cap.statLabel}</span>
+                  </div>
+                  <p className="text-foreground font-medium text-sm md:text-base">{cap.title}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </section>
 
