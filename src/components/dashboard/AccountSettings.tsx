@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { STRIPE_PRICES } from "@/lib/stripe-config";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import UpgradePlanModal from "@/components/UpgradePlanModal";
 import {
   User,
   CreditCard,
@@ -57,6 +58,7 @@ const AccountSettings = () => {
   const [subLoading, setSubLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   // Form state
   const [fullName, setFullName] = useState("");
@@ -108,8 +110,13 @@ const AccountSettings = () => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ full_name: fullName, phone })
-        .eq("user_id", user!.id);
+        .upsert({ 
+          user_id: user!.id,
+          full_name: fullName, 
+          phone 
+        }, { 
+          onConflict: "user_id" 
+        });
 
       if (error) throw error;
       toast.success("Profile updated successfully");
@@ -328,12 +335,18 @@ const AccountSettings = () => {
                   <Button
                     variant="hero"
                     className="gap-2 sm:col-span-2"
-                    onClick={() => window.location.href = "/#pricing"}
+                    onClick={() => setUpgradeModalOpen(true)}
                   >
                     <Crown className="w-4 h-4" />
                     Upgrade Your Plan
                   </Button>
                 )}
+                
+                <UpgradePlanModal 
+                  open={upgradeModalOpen} 
+                  onOpenChange={setUpgradeModalOpen}
+                  currentPlanId={subscription?.product_id}
+                />
               </div>
 
               <p className="text-xs text-muted-foreground">

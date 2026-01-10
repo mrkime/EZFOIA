@@ -110,9 +110,9 @@ const FeaturesPage = () => {
               Everything you need to request, track, and analyze government documents—all in one platform 
               built for the modern era.
             </p>
-            <Link to="/auth">
+            <Link to="/#pricing">
               <Button variant="hero" size="lg" className="gap-2">
-                Get Started Free
+                View Plans & Pricing
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
@@ -215,9 +215,9 @@ const FeaturesPage = () => {
                 public records requests.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/auth">
+                <Link to="/#pricing">
                   <Button variant="hero" size="lg" className="gap-2 w-full sm:w-auto">
-                    Start Your First Request
+                    View Plans & Get Started
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </Link>
