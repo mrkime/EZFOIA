@@ -7,7 +7,7 @@ import PageHeader from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FeaturedBlogSkeleton, BlogCardSkeleton } from "@/components/ui/skeletons";
 import { Calendar, Clock, ArrowRight, BookOpen } from "lucide-react";
 
 type BlogPost = {
@@ -82,11 +82,14 @@ const Blog = () => {
       {loading ? (
         <section className="py-8 px-6">
           <div className="container mx-auto max-w-6xl space-y-8">
-            <Skeleton className="h-80 w-full rounded-xl" />
-            <div className="grid md:grid-cols-3 gap-6">
-              <Skeleton className="h-64 rounded-xl" />
-              <Skeleton className="h-64 rounded-xl" />
-              <Skeleton className="h-64 rounded-xl" />
+            <FeaturedBlogSkeleton />
+            <div>
+              <div className="h-7 w-36 bg-muted rounded mb-8 animate-pulse" />
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <BlogCardSkeleton key={i} />
+                ))}
+              </div>
             </div>
           </div>
         </section>

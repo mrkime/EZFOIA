@@ -7,7 +7,7 @@ import PageHeader from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { HelpCategoryCardSkeleton, ArticleListSkeleton } from "@/components/ui/skeletons";
 import { 
   HelpCircle, 
   FileText, 
@@ -141,11 +141,11 @@ const HelpCenter = () => {
       {loading ? (
         <section className="py-16 px-6">
           <div className="container mx-auto max-w-6xl">
+            <div className="h-7 w-44 bg-muted rounded mb-8 animate-pulse" />
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Skeleton className="h-40 rounded-xl" />
-              <Skeleton className="h-40 rounded-xl" />
-              <Skeleton className="h-40 rounded-xl" />
-              <Skeleton className="h-40 rounded-xl" />
+              {[...Array(4)].map((_, i) => (
+                <HelpCategoryCardSkeleton key={i} />
+              ))}
             </div>
           </div>
         </section>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ActivityLogSkeleton } from "@/components/ui/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,8 +90,18 @@ const ActivityLog = () => {
       <CardContent>
         {loading ? (
           <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map(i => (
-              <Skeleton key={i} className="h-16 w-full" />
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-start gap-4 p-3 rounded-lg">
+                <Skeleton className="h-5 w-5 rounded mt-1" />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </div>
+                  <Skeleton className="h-3 w-48 mt-2" />
+                  <Skeleton className="h-3 w-32 mt-1" />
+                </div>
+              </div>
             ))}
           </div>
         ) : activities.length === 0 ? (
