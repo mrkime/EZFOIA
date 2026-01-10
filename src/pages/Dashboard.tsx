@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import DashboardSummary from "@/components/dashboard/DashboardSummary";
 import RequestHistoryTable from "@/components/dashboard/RequestHistoryTable";
 import AccountSettings from "@/components/dashboard/AccountSettings";
+import DashboardTour from "@/components/DashboardTour";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Settings } from "lucide-react";
@@ -22,6 +23,8 @@ interface FoiaRequest {
   updated_at: string;
 }
 
+const TOUR_STORAGE_KEY = "ezfoia_dashboard_tour_completed";
+
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -29,6 +32,30 @@ const Dashboard = () => {
   const [requests, setRequests] = useState<FoiaRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("requests");
+  const [showTour, setShowTour] = useState(false);
+
+  // Check if user should see the tour
+  useEffect(() => {
+    if (user) {
+      const tourCompleted = localStorage.getItem(TOUR_STORAGE_KEY);
+      if (!tourCompleted) {
+        // Small delay to let the page render first
+        const timer = setTimeout(() => setShowTour(true), 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [user]);
+
+  const handleTourComplete = () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, "true");
+    setShowTour(false);
+    toast.success("Welcome aboard! You're all set to start using EZFOIA.");
+  };
+
+  const handleTourSkip = () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, "true");
+    setShowTour(false);
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -85,6 +112,14 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      
+      {/* Dashboard Tour */}
+      {showTour && (
+        <DashboardTour
+          onComplete={handleTourComplete}
+          onSkip={handleTourSkip}
+        />
+      )}
       
       <main className="container mx-auto px-6 pt-32 pb-16">
         <div className="mb-8">
