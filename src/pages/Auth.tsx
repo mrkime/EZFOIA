@@ -354,8 +354,7 @@ const Auth = () => {
                             <FormItem>
                               <FormLabel className="flex items-center gap-2">
                                 <Phone className="w-4 h-4" />
-                                Phone Number
-                                <span className="text-xs text-muted-foreground font-normal">(optional)</span>
+                                Phone
                               </FormLabel>
                               <FormControl>
                                 <PhoneInput
@@ -364,9 +363,6 @@ const Auth = () => {
                                   className="bg-card border-border"
                                 />
                               </FormControl>
-                              <p className="text-xs text-muted-foreground">
-                                For SMS status updates on your requests
-                              </p>
                               <FormMessage />
                             </FormItem>
                           )}
