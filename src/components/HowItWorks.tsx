@@ -1,6 +1,6 @@
 import { ClipboardList, Send, Bell, FileSearch } from "lucide-react";
 import { motion, useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
 const steps = [
   {
@@ -30,18 +30,19 @@ const steps = [
 ];
 
 const StepCard = ({ step, index }: { step: typeof steps[0]; index: number }) => {
-  const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef(null);
-  const isInView = useInView(cardRef, { once: true, margin: "-100px" });
+  const isInView = useInView(cardRef, { once: true, margin: "-50px" });
 
   return (
     <motion.div
       ref={cardRef}
-      initial={{ opacity: 0, y: 50 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-      transition={{ duration: 0.6, delay: index * 0.15, ease: "easeOut" }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      initial={{ opacity: 0, y: 50, scale: 0.95 }}
+      animate={isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 50, scale: 0.95 }}
+      transition={{ 
+        duration: 0.5, 
+        delay: index * 0.12, 
+        ease: [0.25, 0.1, 0.25, 1] 
+      }}
       className="relative group"
     >
       {/* Animated connector line */}
@@ -49,7 +50,7 @@ const StepCard = ({ step, index }: { step: typeof steps[0]; index: number }) => 
         <motion.div
           initial={{ scaleX: 0 }}
           animate={isInView ? { scaleX: 1 } : { scaleX: 0 }}
-          transition={{ duration: 0.8, delay: index * 0.15 + 0.4 }}
+          transition={{ duration: 0.8, delay: index * 0.12 + 0.3 }}
           className="hidden lg:block absolute top-16 left-[65%] w-[70%] h-[2px] origin-left"
           style={{
             background: "linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.3) 50%, transparent 100%)",
@@ -58,55 +59,46 @@ const StepCard = ({ step, index }: { step: typeof steps[0]; index: number }) => 
       )}
 
       <motion.div
-        animate={{
-          scale: isHovered ? 1.02 : 1,
-          y: isHovered ? -8 : 0,
-        }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm p-8 h-full"
+        className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm p-8 h-full hover:border-primary/30 transition-colors"
       >
-        {/* Animated background gradient on hover */}
+        {/* Animated background gradient on scroll */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
-          animate={{
-            opacity: isHovered ? 1 : 0,
-            scale: isHovered ? 1.2 : 0.8,
-          }}
-          transition={{ duration: 0.4 }}
+          whileInView={{ opacity: 0.7, scale: 1 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6, delay: index * 0.1 }}
           className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-primary/10 blur-3xl"
         />
 
         {/* Step number with animated ring */}
         <div className="relative flex items-center gap-4 mb-6">
           <div className="relative">
-            {/* Outer ring */}
+            {/* Outer ring - appears on scroll */}
             <motion.div
               className="absolute inset-0 rounded-xl border-2 border-primary/30"
-              animate={{
-                scale: isHovered ? 1.15 : 1,
-                opacity: isHovered ? 1 : 0,
-              }}
-              transition={{ duration: 0.3 }}
+              initial={{ scale: 1, opacity: 0 }}
+              whileInView={{ scale: 1.15, opacity: 1 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.4, delay: index * 0.1 + 0.2 }}
             />
             {/* Icon container */}
             <motion.div
               className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center relative z-10"
-              animate={{
-                backgroundColor: isHovered ? "hsl(var(--primary) / 0.2)" : "hsl(var(--primary) / 0.1)",
-              }}
+              whileInView={{ backgroundColor: "hsl(var(--primary) / 0.2)" }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 + 0.3 }}
             >
               <step.icon className="w-7 h-7 text-primary" />
             </motion.div>
           </div>
 
-          {/* Step number with pulse effect */}
+          {/* Step number with scroll animation */}
           <motion.span
-            className="font-display text-5xl font-bold text-muted-foreground/20"
-            animate={{
-              color: isHovered ? "hsl(var(--primary) / 0.4)" : "hsl(var(--muted-foreground) / 0.2)",
-              scale: isHovered ? 1.1 : 1,
-            }}
-            transition={{ duration: 0.3 }}
+            className="font-display text-5xl font-bold"
+            initial={{ color: "hsl(var(--muted-foreground) / 0.2)" }}
+            whileInView={{ color: "hsl(var(--primary) / 0.4)" }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.5, delay: index * 0.1 + 0.2 }}
           >
             {step.step}
           </motion.span>
@@ -119,26 +111,28 @@ const StepCard = ({ step, index }: { step: typeof steps[0]; index: number }) => 
           </h3>
           <motion.div
             className="h-0.5 bg-primary rounded-full mt-2"
-            initial={{ width: 0 }}
-            animate={{ width: isHovered ? "100%" : "40%" }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+            initial={{ width: "0%" }}
+            whileInView={{ width: "60%" }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.6, delay: index * 0.1 + 0.3, ease: "easeOut" }}
           />
         </div>
 
         {/* Description */}
         <p className="text-muted-foreground leading-relaxed">{step.description}</p>
 
-        {/* Progress indicator dot */}
+        {/* Progress indicator dot - pulses on scroll */}
         <motion.div
           className="absolute bottom-4 right-4 w-3 h-3 rounded-full bg-primary/50"
-          animate={{
-            scale: isHovered ? [1, 1.5, 1] : 1,
-            opacity: isHovered ? 1 : 0.5,
+          initial={{ opacity: 0, scale: 0 }}
+          whileInView={{ 
+            opacity: 0.7, 
+            scale: [1, 1.3, 1],
           }}
+          viewport={{ once: true, margin: "-50px" }}
           transition={{
-            duration: 0.6,
-            repeat: isHovered ? Infinity : 0,
-            repeatType: "reverse",
+            opacity: { duration: 0.3, delay: index * 0.1 + 0.4 },
+            scale: { duration: 1.5, delay: index * 0.1 + 0.5, repeat: 2 },
           }}
         />
       </motion.div>
