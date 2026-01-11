@@ -35,6 +35,7 @@ import { Loader2, CheckCircle, ArrowRight, LogIn, Crown, Check } from "lucide-re
 import { useNavigate } from "react-router-dom";
 import { requestSchema, type RequestFormData } from "@/lib/request-validation";
 import { logger } from "@/lib/logger";
+import { TEST_SUBSCRIPTION_KEY } from "@/components/admin/AdminSettings";
 
 export const PENDING_REQUEST_KEY = "pending_foia_request";
 
@@ -157,6 +158,23 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
   const checkSubscriptionAndUsage = async () => {
     setSubLoading(true);
     try {
+      // Check for admin test subscription first
+      const testSubscription = localStorage.getItem(TEST_SUBSCRIPTION_KEY);
+      if (testSubscription) {
+        try {
+          const parsed = JSON.parse(testSubscription);
+          if (parsed.product_id) {
+            setSubscription({ subscribed: true, product_id: parsed.product_id });
+            // For test mode, reset the count to allow testing
+            setRequestCount(0);
+            setSubLoading(false);
+            return;
+          }
+        } catch {
+          localStorage.removeItem(TEST_SUBSCRIPTION_KEY);
+        }
+      }
+
       // Check subscription status
       const { data: subData, error: subError } = await supabase.functions.invoke("check-subscription");
       if (subError) throw subError;
