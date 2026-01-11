@@ -2,13 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CreditCard, Crown, FileText, Clock, CheckCircle, Loader2, ExternalLink, RefreshCw } from "lucide-react";
+import { CreditCard, Crown, FileText, Clock, CheckCircle, Loader2, ExternalLink, RefreshCw, TestTube } from "lucide-react";
 import { STRIPE_PRICES, matchesPlan } from "@/lib/stripe-config";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { logger } from "@/lib/logger";
+import { TEST_SUBSCRIPTION_KEY } from "@/components/admin/AdminSettings";
 
 interface FoiaRequest {
   id: string;
@@ -20,6 +21,7 @@ interface SubscriptionData {
   product_id: string | null;
   price_id: string | null;
   subscription_end: string | null;
+  isTestMode?: boolean;
 }
 
 interface DashboardSummaryProps {
@@ -47,27 +49,68 @@ const DashboardSummary = ({ requests, loading }: DashboardSummaryProps) => {
   const [subLoading, setSubLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const checkSubscription = async (showRefreshToast = false) => {
+  const checkSubscription = useCallback(async (showRefreshToast = false) => {
     if (showRefreshToast) setRefreshing(true);
     try {
+      // Check for test subscription first
+      const testSubscription = localStorage.getItem(TEST_SUBSCRIPTION_KEY);
+      if (testSubscription) {
+        try {
+          const parsed = JSON.parse(testSubscription);
+          if (parsed.product_id) {
+            setSubscription({
+              subscribed: true,
+              product_id: parsed.product_id,
+              price_id: null,
+              subscription_end: null,
+              isTestMode: true,
+            });
+            if (showRefreshToast) toast.success("Test subscription status updated");
+            setSubLoading(false);
+            setRefreshing(false);
+            return;
+          }
+        } catch {
+          localStorage.removeItem(TEST_SUBSCRIPTION_KEY);
+        }
+      }
+
+      // No test subscription, check real subscription
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (error) throw error;
-      setSubscription(data);
+      setSubscription({ ...data, isTestMode: false });
       if (showRefreshToast) toast.success("Subscription status updated");
     } catch (error) {
       logger.error("Error checking subscription:", error);
-      setSubscription({ subscribed: false, product_id: null, price_id: null, subscription_end: null });
+      setSubscription({ subscribed: false, product_id: null, price_id: null, subscription_end: null, isTestMode: false });
     } finally {
       setSubLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     checkSubscription();
     const interval = setInterval(() => checkSubscription(), 60000);
-    return () => clearInterval(interval);
-  }, []);
+
+    // Listen for storage changes (when admin toggles test subscription)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === TEST_SUBSCRIPTION_KEY) {
+        checkSubscription();
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+
+    // Also listen for custom event for same-tab updates
+    const handleTestSubscriptionChange = () => checkSubscription();
+    window.addEventListener("testSubscriptionChanged", handleTestSubscriptionChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("testSubscriptionChanged", handleTestSubscriptionChange);
+    };
+  }, [checkSubscription]);
 
   const planDetails = getPlanDetails(subscription?.product_id ?? null);
   const isSubscribed = subscription?.subscribed;
@@ -112,11 +155,20 @@ const DashboardSummary = ({ requests, loading }: DashboardSummaryProps) => {
               <div className="flex items-center gap-2 mb-1">
                 {isSubscribed && <Crown className="w-4 h-4 text-amber-400" />}
                 <span className="text-xl font-bold font-display">{planDetails.name}</span>
+                {subscription?.isTestMode && (
+                  <Badge variant="outline" className="text-xs flex items-center gap-1 border-amber-500/50 text-amber-400">
+                    <TestTube className="w-3 h-3" />
+                    Test
+                  </Badge>
+                )}
               </div>
               {isSubscribed && subscription?.subscription_end && (
                 <p className="text-xs text-muted-foreground">
                   Renews {format(new Date(subscription.subscription_end), "MMM d, yyyy")}
                 </p>
+              )}
+              {isSubscribed && subscription?.isTestMode && (
+                <p className="text-xs text-muted-foreground">Admin test mode active</p>
               )}
               {!isSubscribed && (
                 <p className="text-xs text-muted-foreground">No active subscription</p>

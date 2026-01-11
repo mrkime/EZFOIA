@@ -126,6 +126,8 @@ const AdminSettings = () => {
     };
     localStorage.setItem(TEST_SUBSCRIPTION_KEY, JSON.stringify(testData));
     setActiveTestPlan(planName);
+    // Dispatch custom event for same-tab updates
+    window.dispatchEvent(new Event('testSubscriptionChanged'));
     toast({
       title: 'Test Subscription Activated',
       description: `You can now test the ${planName} experience. Go to the dashboard to submit requests.`,
@@ -135,6 +137,8 @@ const AdminSettings = () => {
   const deactivateTestSubscription = () => {
     localStorage.removeItem(TEST_SUBSCRIPTION_KEY);
     setActiveTestPlan(null);
+    // Dispatch custom event for same-tab updates
+    window.dispatchEvent(new Event('testSubscriptionChanged'));
     toast({
       title: 'Test Subscription Deactivated',
       description: 'Normal subscription checking is now active.',
