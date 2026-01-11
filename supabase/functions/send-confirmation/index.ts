@@ -77,7 +77,7 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     // 1. Check for authentication
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       logStep("No authorization header");
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
@@ -95,10 +95,12 @@ const handler = async (req: Request): Promise<Response> => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // 3. Verify the user is authenticated
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !user) {
-      logStep("User authentication failed", { error: userError });
+    // 3. Verify the user is authenticated using getClaims for better reliability
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      logStep("User authentication failed", { error: claimsError });
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         {
@@ -108,7 +110,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    logStep("User authenticated", { userId: user.id });
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
+    logStep("User authenticated", { userId, email: userEmail });
 
     // 4. Parse and validate input
     const rawBody = await req.json();
@@ -148,8 +152,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (request.user_id !== user.id) {
-      logStep("User does not own request", { userId: user.id, requestUserId: request.user_id });
+    if (request.user_id !== userId) {
+      logStep("User does not own request", { userId, requestUserId: request.user_id });
       return new Response(
         JSON.stringify({ error: "Forbidden" }),
         {
