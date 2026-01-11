@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { FileText, Loader2, ArrowLeft, CheckCircle, KeyRound } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle, KeyRound } from "lucide-react";
+import Logo from "@/components/Logo";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -90,12 +91,7 @@ const ResetPassword = () => {
           <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
         </div>
         <div className="relative z-10 text-center">
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center">
-              <FileText className="w-7 h-7 text-primary-foreground" />
-            </div>
-            <span className="font-display text-3xl font-bold">EZFOIA</span>
-          </div>
+          <Logo className="justify-center mb-8 [&_svg]:w-10 [&_svg]:h-12 [&_div]:text-3xl" />
           <h1 className="font-display text-4xl font-bold mb-4">
             Create a New<br />
             <span className="text-gradient">Secure Password</span>
