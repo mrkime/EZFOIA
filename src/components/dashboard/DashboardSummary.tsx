@@ -34,7 +34,7 @@ const getPlanDetails = (productId: string | null) => {
     return { name: "Single Request", color: "bg-primary/20 text-primary", requestLimit: 1 };
   }
   if (matchesPlan(productId, "professional")) {
-    return { name: "Professional", color: "bg-primary/20 text-primary", requestLimit: 10 };
+    return { name: "Professional", color: "bg-primary/20 text-primary", requestLimit: 5 };
   }
   if (matchesPlan(productId, "enterprise")) {
     return { name: "Enterprise", color: "bg-amber-500/20 text-amber-400", requestLimit: -1 }; // unlimited
