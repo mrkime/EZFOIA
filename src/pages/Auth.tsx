@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import zxcvbn from "zxcvbn";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,6 +21,7 @@ import Logo from "@/components/Logo";
 import { Link } from "react-router-dom";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { motion, AnimatePresence } from "framer-motion";
+import { PasswordStrengthIndicator, isPasswordStrong } from "@/components/PasswordStrengthIndicator";
 
 const signInSchema = z.object({
   email: z.string().trim().email({ message: "Please enter a valid email" }),
@@ -30,7 +32,12 @@ const signUpSchema = z.object({
   fullName: z.string().trim().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().trim().email({ message: "Please enter a valid email" }),
   phone: z.string().optional(),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  password: z
+    .string()
+    .min(8, { message: "Password must be at least 8 characters" })
+    .refine((password) => isPasswordStrong(password), {
+      message: "Password is too weak. Please use a stronger password.",
+    }),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
@@ -524,6 +531,7 @@ const Auth = () => {
                                   {...field}
                                 />
                               </FormControl>
+                              <PasswordStrengthIndicator password={field.value} className="mt-2" />
                               <FormMessage />
                             </FormItem>
                           )}
