@@ -165,8 +165,14 @@ const RequestFormModal = ({ children }: RequestFormModalProps) => {
           const parsed = JSON.parse(testSubscription);
           if (parsed.product_id) {
             setSubscription({ subscribed: true, product_id: parsed.product_id });
-            // For test mode, reset the count to allow testing
-            setRequestCount(0);
+            // Get actual request count from database for test mode too
+            const { count, error: countError } = await supabase
+              .from("foia_requests")
+              .select("*", { count: "exact", head: true })
+              .eq("user_id", user!.id);
+            
+            if (countError) throw countError;
+            setRequestCount(count || 0);
             setSubLoading(false);
             return;
           }
