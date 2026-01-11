@@ -238,21 +238,29 @@ const Hero = () => {
             className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in"
             style={{ y: cardsY, animationDelay: '0.4s' }}
           >
-            <div className="glass rounded-xl p-6 hover:border-primary/30 transition-colors">
-              <Clock className="w-8 h-8 text-primary mb-3 mx-auto" />
-              <h3 className="font-display font-semibold mb-1">Real-Time Tracking</h3>
-              <p className="text-sm text-muted-foreground">Get SMS updates on your request status</p>
-            </div>
-            <div className="glass rounded-xl p-6 hover:border-primary/30 transition-colors">
-              <FileSearch className="w-8 h-8 text-primary mb-3 mx-auto" />
-              <h3 className="font-display font-semibold mb-1">AI-Powered Search</h3>
-              <p className="text-sm text-muted-foreground">Search through your documents instantly</p>
-            </div>
-            <div className="glass rounded-xl p-6 hover:border-primary/30 transition-colors">
-              <Shield className="w-8 h-8 text-primary mb-3 mx-auto" />
-              <h3 className="font-display font-semibold mb-1">Fully Managed</h3>
-              <p className="text-sm text-muted-foreground">We handle all the complexity for you</p>
-            </div>
+            {[
+              { icon: Clock, title: "Real-Time Tracking", desc: "Get SMS updates on your request status" },
+              { icon: FileSearch, title: "AI-Powered Search", desc: "Search through your documents instantly" },
+              { icon: Shield, title: "Fully Managed", desc: "We handle all the complexity for you" },
+            ].map((item, index) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ 
+                  duration: 0.5, 
+                  delay: 0.1 + index * 0.1,
+                  ease: [0.25, 0.1, 0.25, 1]
+                }}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="glass rounded-xl p-6 hover:border-primary/30 transition-colors"
+              >
+                <item.icon className="w-8 h-8 text-primary mb-3 mx-auto" />
+                <h3 className="font-display font-semibold mb-1">{item.title}</h3>
+                <p className="text-sm text-muted-foreground">{item.desc}</p>
+              </motion.div>
+            ))}
           </motion.div>
         </motion.div>
       </div>
