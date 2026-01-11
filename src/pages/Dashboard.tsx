@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import DashboardSummary from "@/components/dashboard/DashboardSummary";
 import RequestHistoryTable from "@/components/dashboard/RequestHistoryTable";
+import RequestLimitCounter from "@/components/dashboard/RequestLimitCounter";
 import AccountSettings from "@/components/dashboard/AccountSettings";
 import DashboardTour from "@/components/DashboardTour";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -129,6 +130,11 @@ const Dashboard = () => {
           <p className="text-muted-foreground">
             Track your FOIA requests, manage your account, and access returned documents.
           </p>
+        </div>
+
+        {/* Request Limit Counter */}
+        <div className="mb-6">
+          <RequestLimitCounter requestCount={requests.length} loading={loading} />
         </div>
 
         {/* Summary Section */}
