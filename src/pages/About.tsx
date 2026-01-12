@@ -31,9 +31,9 @@ const About = () => {
       <PageHeader
         badge="About Us"
         badgeIcon={Info}
-        title="Built to Make FOIA"
-        titleHighlight="Simpler"
-        description="EZFOIA was founded in 2026 by Andrew Kime with one goal: to remove friction from the FOIA process."
+        title="Democratizing Access to"
+        titleHighlight="Public Records"
+        description="EZFOIA was founded on a simple belief: everyone deserves easy access to government information. We're on a mission to make the Freedom of Information process accessible, affordable, and efficient."
       />
 
       {/* Our Story */}
