@@ -8,7 +8,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import { logger } from "@/lib/logger";
 import { matchesPlan } from "@/lib/stripe-config";
 import { TEST_SUBSCRIPTION_KEY } from "@/components/admin/AdminSettings";
@@ -30,11 +29,10 @@ import {
   ContextStep,
   GeneratingStep,
   PreviewStep,
+  AuthStep,
   PlanSelectionStep,
   SuccessStep,
 } from "./steps";
-import { Button } from "@/components/ui/button";
-import { LogIn, ArrowRight, Clock } from "lucide-react";
 
 interface FoiaWizardModalProps {
   children: React.ReactNode;
@@ -61,13 +59,12 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
   const [generatedRequest, setGeneratedRequest] = useState<GeneratedRequest | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
-  const [requestCount, setRequestCount] = useState(0);
+  const [requestCount, setRequestCount] = useState<number | null>(null);
 
   const { toast } = useToast();
   const { user } = useAuth();
-  const navigate = useNavigate();
 
-  // Check subscription when modal opens
+  // Check subscription when user becomes available
   useEffect(() => {
     if (user && open) {
       checkSubscription();
@@ -75,6 +72,8 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
   }, [user, open]);
 
   const checkSubscription = async () => {
+    if (!user) return;
+    
     try {
       // Check for admin test subscription first
       const testSubscription = localStorage.getItem(TEST_SUBSCRIPTION_KEY);
@@ -86,7 +85,7 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
             const { count } = await supabase
               .from("foia_requests")
               .select("*", { count: "exact", head: true })
-              .eq("user_id", user!.id);
+              .eq("user_id", user.id);
             setRequestCount(count || 0);
             return;
           }
@@ -102,19 +101,28 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
       const { count } = await supabase
         .from("foia_requests")
         .select("*", { count: "exact", head: true })
-        .eq("user_id", user!.id);
+        .eq("user_id", user.id);
       setRequestCount(count || 0);
     } catch (error) {
       logger.error("Error checking subscription:", error);
       setSubscription({ subscribed: false, product_id: null });
+      setRequestCount(0);
     }
   };
 
-  const canSubmitRequest = (): boolean => {
-    if (!subscription?.subscribed) return false;
-    const limit = getRequestLimit(subscription.product_id);
-    if (limit === -1) return true;
-    return requestCount < limit;
+  // Check if user can submit for free (first request) or has active subscription
+  const canSubmitFree = (): boolean => {
+    // First request is always free
+    if (requestCount === 0) return true;
+    
+    // Has active subscription with remaining requests
+    if (subscription?.subscribed) {
+      const limit = getRequestLimit(subscription.product_id);
+      if (limit === -1) return true; // Unlimited
+      return requestCount !== null && requestCount < limit;
+    }
+    
+    return false;
   };
 
   const updateWizardData = useCallback((updates: Partial<WizardState>) => {
@@ -123,7 +131,7 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
 
   const goToStep = (nextStep: WizardStep) => {
     // Track completed steps
-    if (!completedSteps.includes(step) && step !== "generating" && step !== "preview") {
+    if (!completedSteps.includes(step) && step !== "generating" && step !== "preview" && step !== "auth") {
       setCompletedSteps(prev => [...prev, step]);
     }
     setStep(nextStep);
@@ -156,25 +164,47 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handlePreviewSubmit = async () => {
+    // If user is not authenticated, go to auth step
+    if (!user) {
+      setStep("auth");
+      return;
+    }
+
+    // Check subscription status and submit accordingly
+    await handleFinalSubmit();
+  };
+
+  const handleAuthSuccess = async () => {
+    // User just authenticated, check their subscription/request count
+    await checkSubscription();
+    // Small delay to let state update
+    setTimeout(() => {
+      handleFinalSubmit();
+    }, 500);
+  };
+
+  const handleFinalSubmit = async () => {
     if (!user) {
       toast({
         title: "Please sign in",
         description: "You need to be signed in to submit a FOIA request.",
         variant: "destructive",
       });
-      setOpen(false);
-      navigate("/auth");
+      setStep("auth");
       return;
     }
 
-    // Check if user can submit
-    if (!canSubmitRequest()) {
+    // Re-check subscription before submitting
+    await checkSubscription();
+
+    // Check if user can submit (first request free or has subscription)
+    if (!canSubmitFree()) {
       // Store the data for after payment
       const requestData = {
         agencyName: wizardData.agencyName,
         agencyType: wizardData.jurisdictionType,
-        recordType: "other", // We'll map this differently for the wizard
+        recordType: "other",
         recordDescription: generatedRequest?.letter || wizardData.recordsDescription,
       };
       localStorage.setItem(PENDING_REQUEST_KEY, JSON.stringify(requestData));
@@ -182,7 +212,7 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
       return;
     }
 
-    // Submit directly
+    // Submit directly (first request free or has subscription)
     setIsSubmitting(true);
     try {
       const { data: requestData, error: insertError } = await supabase
@@ -211,9 +241,13 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
       }).catch((err) => logger.error("Email send error:", err));
 
       setStep("success");
+      
+      const isFirstRequest = requestCount === 0;
       toast({
         title: "Request Submitted!",
-        description: "Check your email for confirmation details.",
+        description: isFirstRequest 
+          ? "Your first free request has been submitted. Check your email for confirmation."
+          : "Check your email for confirmation details.",
       });
     } catch (error) {
       logger.error("Error submitting request:", error);
@@ -237,6 +271,7 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
           setWizardData(initialWizardState);
           setCompletedSteps([]);
           setGeneratedRequest(null);
+          setRequestCount(null);
         }, 300);
       }
     }
@@ -247,46 +282,6 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
       setGeneratedRequest({ ...generatedRequest, letter });
     }
   };
-
-  // If not logged in, show sign-in prompt
-  if (!user && open) {
-    return (
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent className="sm:max-w-[500px] bg-card border-border">
-          <div className="py-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
-              <LogIn className="w-8 h-8 text-primary" />
-            </div>
-            <h3 className="font-display text-2xl font-bold mb-2">Start Your FOIA Request</h3>
-            <p className="text-muted-foreground mb-2">
-              Create an account or sign in to begin.
-            </p>
-            <p className="text-sm text-muted-foreground mb-6 flex items-center justify-center gap-2">
-              <Clock className="w-4 h-4" />
-              Takes ~3 minutes. No legal knowledge required.
-            </p>
-            <div className="flex flex-col gap-3">
-              <Button
-                variant="hero"
-                size="lg"
-                onClick={() => {
-                  setOpen(false);
-                  navigate("/auth");
-                }}
-              >
-                Sign In / Sign Up
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-              <Button variant="ghost" onClick={() => setOpen(false)}>
-                Maybe Later
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -365,9 +360,18 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
               key="preview"
               generatedRequest={generatedRequest}
               onLetterChange={handleLetterChange}
-              onSubmit={handleSubmit}
+              onSubmit={handlePreviewSubmit}
               onBack={() => goToStep("context")}
               isSubmitting={isSubmitting}
+              isFirstRequest={!user || requestCount === 0}
+            />
+          )}
+
+          {step === "auth" && (
+            <AuthStep
+              key="auth"
+              onSuccess={handleAuthSuccess}
+              onBack={() => goToStep("preview")}
             />
           )}
 

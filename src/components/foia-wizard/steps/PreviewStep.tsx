@@ -8,7 +8,8 @@ import {
   AlertTriangle,
   Check,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Gift
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +21,7 @@ interface PreviewStepProps {
   onSubmit: () => void;
   onBack: () => void;
   isSubmitting: boolean;
+  isFirstRequest?: boolean;
 }
 
 export const PreviewStep = ({ 
@@ -27,7 +29,8 @@ export const PreviewStep = ({
   onLetterChange, 
   onSubmit, 
   onBack,
-  isSubmitting 
+  isSubmitting,
+  isFirstRequest = false
 }: PreviewStepProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showTips, setShowTips] = useState(false);
@@ -128,6 +131,21 @@ export const PreviewStep = ({
         </div>
       )}
 
+      {/* First Request Free Banner */}
+      {isFirstRequest && (
+        <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+            <Gift className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p className="font-medium text-sm">Your first request is free!</p>
+            <p className="text-xs text-muted-foreground">
+              No credit card required. Agency fees over $50 billed at cost.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* What's Included */}
       <div className="bg-muted/30 rounded-xl p-4 border border-border">
         <h4 className="font-medium text-sm mb-3">What's included with your submission:</h4>
@@ -169,7 +187,12 @@ export const PreviewStep = ({
           onClick={onSubmit}
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Processing..." : "Submit & File Request"}
+          {isSubmitting 
+            ? "Processing..." 
+            : isFirstRequest 
+              ? "Submit Free Request" 
+              : "Submit & File Request"
+          }
         </Button>
       </div>
     </motion.div>

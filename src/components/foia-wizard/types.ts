@@ -44,6 +44,7 @@ export type WizardStep =
   | "context"
   | "generating"
   | "preview"
+  | "auth"
   | "plan-selection"
   | "success";
 

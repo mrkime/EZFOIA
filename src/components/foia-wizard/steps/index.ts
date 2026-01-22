@@ -6,5 +6,6 @@ export { FormatStep } from "./FormatStep";
 export { ContextStep } from "./ContextStep";
 export { GeneratingStep } from "./GeneratingStep";
 export { PreviewStep } from "./PreviewStep";
+export { AuthStep } from "./AuthStep";
 export { PlanSelectionStep } from "./PlanSelectionStep";
 export { SuccessStep } from "./SuccessStep";
