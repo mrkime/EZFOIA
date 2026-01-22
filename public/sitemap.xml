@@ -1,25 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   
   <!-- Homepage - Highest Priority -->
   <url>
     <loc>https://ezfoia.lovable.app/</loc>
     <lastmod>2026-01-22</lastmod>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   
-  <!-- Core Product Pages -->
+  <!-- Core FOIA Content - Highest SEO Value -->
   <url>
-    <loc>https://ezfoia.lovable.app/features</loc>
+    <loc>https://ezfoia.lovable.app/foia-guide</loc>
     <lastmod>2026-01-22</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.95</priority>
   </url>
   
+  <!-- Product Pages -->
   <url>
     <loc>https://ezfoia.lovable.app/pricing</loc>
     <lastmod>2026-01-22</lastmod>
@@ -27,34 +26,35 @@
     <priority>0.9</priority>
   </url>
   
-  <!-- Educational Content - High SEO Value -->
   <url>
-    <loc>https://ezfoia.lovable.app/foia-guide</loc>
+    <loc>https://ezfoia.lovable.app/features</loc>
     <lastmod>2026-01-22</lastmod>
-    <changefreq>monthly</changefreq>
+    <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
-  <url>
-    <loc>https://ezfoia.lovable.app/blog</loc>
-    <lastmod>2026-01-22</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
+  <!-- Support & Help - High SEO for FOIA queries -->
   <url>
     <loc>https://ezfoia.lovable.app/help</loc>
     <lastmod>2026-01-22</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
   </url>
   
-  <!-- Company Pages -->
+  <!-- Blog - Fresh content signals -->
+  <url>
+    <loc>https://ezfoia.lovable.app/blog</loc>
+    <lastmod>2026-01-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <!-- Company Pages - Trust signals -->
   <url>
     <loc>https://ezfoia.lovable.app/about</loc>
     <lastmod>2026-01-22</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   
   <url>
@@ -64,6 +64,7 @@
     <priority>0.7</priority>
   </url>
   
+  <!-- Developer API -->
   <url>
     <loc>https://ezfoia.lovable.app/api-access</loc>
     <lastmod>2026-01-22</lastmod>
@@ -76,20 +77,20 @@
     <loc>https://ezfoia.lovable.app/privacy</loc>
     <lastmod>2026-01-22</lastmod>
     <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
+    <priority>0.4</priority>
   </url>
   
   <url>
     <loc>https://ezfoia.lovable.app/terms</loc>
     <lastmod>2026-01-22</lastmod>
     <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
+    <priority>0.4</priority>
   </url>
   
   <url>
     <loc>https://ezfoia.lovable.app/cookies</loc>
     <lastmod>2026-01-22</lastmod>
     <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
+    <priority>0.3</priority>
   </url>
 </urlset>
