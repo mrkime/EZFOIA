@@ -7,11 +7,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Crown, Check, Loader2, ArrowRight, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Crown, Check, ArrowRight, ArrowLeft, X } from "lucide-react";
 import { STRIPE_PRICES } from "@/lib/stripe-config";
 import { toast } from "sonner";
-import { logger } from "@/lib/logger";
+import { EmbeddedCheckoutForm } from "@/components/EmbeddedCheckout";
 
 interface UpgradeLimitModalProps {
   open: boolean;
@@ -19,33 +18,100 @@ interface UpgradeLimitModalProps {
 }
 
 const UpgradeLimitModal = ({ open, onOpenChange }: UpgradeLimitModalProps) => {
-  const [loading, setLoading] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
-  const handleUpgrade = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          priceId: STRIPE_PRICES.enterprise.monthly.priceId,
-          mode: STRIPE_PRICES.enterprise.mode,
-        },
-      });
+  const handleUpgrade = () => {
+    setCheckoutError(null);
+    setShowCheckout(true);
+  };
 
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
-        onOpenChange(false);
-      }
-    } catch (error) {
-      logger.error("Upgrade checkout error:", error);
-      toast.error("Failed to start checkout. Please try again.");
-    } finally {
-      setLoading(false);
+  const handleCheckoutComplete = () => {
+    toast.success("Payment Successful!", {
+      description: "You now have unlimited FOIA requests.",
+    });
+    onOpenChange(false);
+    window.location.href = "/dashboard?payment=success";
+  };
+
+  const handleCheckoutError = (error: string) => {
+    setCheckoutError(error);
+    toast.error("Checkout Error", {
+      description: error,
+    });
+  };
+
+  const handleBackFromCheckout = () => {
+    setShowCheckout(false);
+    setCheckoutError(null);
+  };
+
+  const handleOpenChange = (newOpen: boolean) => {
+    onOpenChange(newOpen);
+    if (!newOpen) {
+      // Reset state when closing
+      setTimeout(() => {
+        setShowCheckout(false);
+        setCheckoutError(null);
+      }, 300);
     }
   };
 
+  // If checkout is active, show embedded checkout
+  if (showCheckout) {
+    return (
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-card border-border">
+          {/* Header with back button */}
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBackFromCheckout}
+              className="gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </Button>
+          </div>
+
+          {/* Selected plan summary */}
+          <div className="bg-muted/30 rounded-lg p-4 border border-border mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Crown className="w-5 h-5 text-amber-400" />
+                <div>
+                  <h3 className="font-semibold">Enterprise Plan</h3>
+                  <p className="text-sm text-muted-foreground">Unlimited FOIA requests</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="font-display text-xl font-bold">$500</span>
+                <span className="text-muted-foreground text-sm ml-1">/mo</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Embedded Checkout */}
+          <div className="rounded-xl overflow-hidden border border-border bg-background">
+            <EmbeddedCheckoutForm
+              priceId={STRIPE_PRICES.enterprise.monthly.priceId}
+              mode={STRIPE_PRICES.enterprise.mode}
+              onComplete={handleCheckoutComplete}
+              onError={handleCheckoutError}
+            />
+          </div>
+
+          {checkoutError && (
+            <p className="text-sm text-destructive text-center mt-2">{checkoutError}</p>
+          )}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[450px] bg-card border-border">
         <DialogHeader>
           <div className="flex items-center justify-center mb-4">
@@ -94,17 +160,10 @@ const UpgradeLimitModal = ({ open, onOpenChange }: UpgradeLimitModalProps) => {
             variant="hero"
             size="lg"
             onClick={handleUpgrade}
-            disabled={loading}
             className="w-full"
           >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                Upgrade to Unlimited
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </>
-            )}
+            Upgrade to Unlimited
+            <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
           
           <Button
