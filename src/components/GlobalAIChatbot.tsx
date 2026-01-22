@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "react-router-dom";
+import MarkdownContent from "@/components/ui/markdown-content";
 
 type Message = {
   role: "user" | "assistant";
@@ -240,13 +241,17 @@ const GlobalAIChatbot = () => {
                     </div>
                   )}
                   <div
-                    className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm ${
+                    className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
                       message.role === "user"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-primary text-primary-foreground text-sm"
                         : "bg-muted text-foreground"
                     }`}
                   >
-                    {message.content}
+                    {message.role === "assistant" ? (
+                      <MarkdownContent content={message.content} variant="chat" />
+                    ) : (
+                      message.content
+                    )}
                   </div>
                   {message.role === "user" && (
                     <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
