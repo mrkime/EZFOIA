@@ -20,33 +20,31 @@ export const WizardProgress = ({ currentStep, completedSteps }: WizardProgressPr
   return (
     <div className="w-full mb-8">
       {/* Progress bar container */}
-      <div className="relative h-2 bg-muted/50 rounded-full overflow-hidden mb-4 backdrop-blur-sm">
-        {/* Animated gradient background */}
+      <div className="relative h-2 bg-muted/50 rounded-full overflow-hidden mb-4">
+        {/* Animated progress fill */}
         <motion.div
-          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary via-primary/80 to-primary"
-          initial={{ width: 0 }}
-          animate={{ width: `${progressPercent}%` }}
-          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-        >
-          {/* Shimmer overlay */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-            animate={{ x: ["-100%", "200%"] }}
-            transition={{ 
-              duration: 1.5, 
-              repeat: Infinity, 
-              repeatDelay: 1,
-              ease: "easeInOut"
-            }}
-          />
-        </motion.div>
+          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-primary/90"
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ width: `${progressPercent}%`, opacity: 1 }}
+          transition={{ 
+            duration: 0.6, 
+            ease: [0.34, 1.56, 0.64, 1], // Bouncy ease
+            opacity: { duration: 0.2 }
+          }}
+        />
         
-        {/* Glowing edge effect */}
+        {/* Glowing tip that follows the progress */}
         <motion.div
-          className="absolute top-0 bottom-0 w-4 bg-gradient-to-r from-primary/50 to-primary blur-sm"
-          initial={{ left: "-1rem" }}
-          animate={{ left: `calc(${progressPercent}% - 1rem)` }}
-          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary shadow-lg shadow-primary/50"
+          initial={{ left: 0, scale: 0 }}
+          animate={{ 
+            left: `calc(${progressPercent}% - 6px)`,
+            scale: [1, 1.3, 1]
+          }}
+          transition={{ 
+            left: { duration: 0.6, ease: [0.34, 1.56, 0.64, 1] },
+            scale: { duration: 0.4, delay: 0.3 }
+          }}
         />
       </div>
 
@@ -62,14 +60,11 @@ export const WizardProgress = ({ currentStep, completedSteps }: WizardProgressPr
               {/* Pulse ring for current step */}
               {isCurrent && (
                 <motion.div
-                  className="absolute inset-0 w-8 h-8 rounded-full bg-primary/20"
-                  animate={{ 
-                    scale: [1, 1.5, 1],
-                    opacity: [0.5, 0, 0.5]
-                  }}
+                  className="absolute w-8 h-8 rounded-full border-2 border-primary"
+                  initial={{ scale: 1, opacity: 0.8 }}
+                  animate={{ scale: 1.6, opacity: 0 }}
                   transition={{ 
-                    duration: 2, 
-                    repeat: Infinity,
+                    duration: 0.6,
                     ease: "easeOut"
                   }}
                 />
@@ -78,47 +73,41 @@ export const WizardProgress = ({ currentStep, completedSteps }: WizardProgressPr
               <motion.div
                 className={`
                   relative w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold
-                  transition-all duration-300 shadow-sm
                   ${isCompleted || isPast
-                    ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-primary/25 shadow-md"
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
                     : isCurrent
-                    ? "bg-gradient-to-br from-primary/30 to-primary/10 text-primary border-2 border-primary shadow-primary/20 shadow-lg"
+                    ? "bg-primary/20 text-primary border-2 border-primary"
                     : "bg-muted/80 text-muted-foreground border border-border"
                   }
                 `}
-                initial={{ scale: 0.8, opacity: 0 }}
+                initial={false}
                 animate={{ 
-                  scale: isCurrent ? 1.15 : 1,
-                  opacity: 1
+                  scale: isCurrent ? [1, 1.2, 1.1] : isPast ? [1.2, 1] : 1,
+                  rotate: isCurrent ? [0, -5, 5, 0] : 0
                 }}
                 transition={{ 
-                  duration: 0.3,
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 20
+                  duration: 0.5,
+                  ease: "easeOut"
                 }}
-                whileHover={{ scale: 1.1 }}
               >
                 {isCompleted || isPast ? (
                   <motion.div
-                    initial={{ scale: 0, rotate: -45 }}
+                    initial={{ scale: 0, rotate: -180 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ 
                       type: "spring",
-                      stiffness: 400,
-                      damping: 15
+                      stiffness: 500,
+                      damping: 15,
+                      delay: 0.1
                     }}
                   >
-                    <Check className="w-4 h-4" />
+                    <Check className="w-4 h-4" strokeWidth={3} />
                   </motion.div>
                 ) : isCurrent ? (
                   <motion.div
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ 
-                      duration: 2, 
-                      repeat: Infinity,
-                      repeatDelay: 3
-                    }}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                   </motion.div>
@@ -137,9 +126,11 @@ export const WizardProgress = ({ currentStep, completedSteps }: WizardProgressPr
                       : "text-muted-foreground"
                   }
                 `}
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
+                animate={{ 
+                  y: isCurrent ? [5, 0] : 0,
+                  opacity: isCurrent ? [0.5, 1] : 1
+                }}
+                transition={{ duration: 0.3 }}
               >
                 {step.label}
               </motion.span>
