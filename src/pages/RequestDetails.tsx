@@ -4,11 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import RequestTimeline from "@/components/RequestTimeline";
+import DocumentViewer from "@/components/documents/DocumentViewer";
+import DocumentAISummary from "@/components/documents/DocumentAISummary";
+import DocumentSearch from "@/components/documents/DocumentSearch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RequestDetailsSkeleton } from "@/components/ui/skeletons";
 import { Separator } from "@/components/ui/separator";
 import { 
   ArrowLeft, 
@@ -22,7 +24,9 @@ import {
   Calendar,
   FileType,
   ScrollText,
-  Activity
+  Activity,
+  Eye,
+  Sparkles
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -47,6 +51,8 @@ interface FoiaDocument {
   file_size: number | null;
   mime_type: string | null;
   created_at: string;
+  ai_summary?: string | null;
+  ai_summary_generated_at?: string | null;
 }
 
 const getStatusConfig = (status: string) => {
@@ -107,6 +113,9 @@ const RequestDetails = () => {
   const [documents, setDocuments] = useState<FoiaDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [documentsLoading, setDocumentsLoading] = useState(true);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<FoiaDocument | null>(null);
+  const [expandedDocId, setExpandedDocId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -171,18 +180,27 @@ const RequestDetails = () => {
       if (error) throw error;
 
       const url = URL.createObjectURL(data);
-      const a = document.createElement("a");
+      const a = window.document.createElement("a");
       a.href = url;
       a.download = doc.file_name;
-      document.body.appendChild(a);
+      window.document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      window.document.body.removeChild(a);
       URL.revokeObjectURL(url);
       toast.success("Download started");
     } catch (error) {
       logger.error("Error downloading document:", error);
       toast.error("Failed to download document");
     }
+  };
+
+  const handleViewDocument = (doc: FoiaDocument) => {
+    setSelectedDocument(doc);
+    setViewerOpen(true);
+  };
+
+  const toggleDocumentExpand = (docId: string) => {
+    setExpandedDocId(expandedDocId === docId ? null : docId);
   };
 
   if (authLoading || loading) {
@@ -376,32 +394,67 @@ const RequestDetails = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     {documents.map(doc => (
-                      <div 
-                        key={doc.id}
-                        className="flex items-center justify-between bg-muted/30 rounded-lg p-4 hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-primary" />
+                      <div key={doc.id} className="space-y-3">
+                        <div 
+                          className="flex items-center justify-between bg-muted/30 rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+                              <FileText className="w-5 h-5 text-primary" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">{doc.file_name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatFileSize(doc.file_size)} • Uploaded {format(new Date(doc.created_at), "MMM d, yyyy")}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium">{doc.file_name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatFileSize(doc.file_size)} • Uploaded {format(new Date(doc.created_at), "MMM d, yyyy")}
-                            </p>
+                          <div className="flex items-center gap-2 shrink-0 ml-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewDocument(doc)}
+                              className="gap-2"
+                            >
+                              <Eye className="w-4 h-4" />
+                              View
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownloadDocument(doc)}
+                              className="gap-2"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant={expandedDocId === doc.id ? "secondary" : "outline"}
+                              size="sm"
+                              onClick={() => toggleDocumentExpand(doc.id)}
+                              className="gap-2"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                              AI
+                            </Button>
                           </div>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownloadDocument(doc)}
-                          className="gap-2"
-                        >
-                          <Download className="w-4 h-4" />
-                          Download
-                        </Button>
+                        
+                        {/* Expanded AI Section */}
+                        {expandedDocId === doc.id && (
+                          <div className="ml-13 space-y-3 pl-4 border-l-2 border-primary/20">
+                            <DocumentAISummary 
+                              documentId={doc.id} 
+                              fileName={doc.file_name}
+                              existingSummary={doc.ai_summary}
+                            />
+                            <DocumentSearch 
+                              documentId={doc.id} 
+                              fileName={doc.file_name}
+                            />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -488,6 +541,13 @@ const RequestDetails = () => {
           </div>
         </div>
       </main>
+
+      {/* Document Viewer Modal */}
+      <DocumentViewer
+        open={viewerOpen}
+        onOpenChange={setViewerOpen}
+        document={selectedDocument}
+      />
     </div>
   );
 };
