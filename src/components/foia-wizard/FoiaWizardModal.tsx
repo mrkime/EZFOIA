@@ -176,30 +176,50 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
   };
 
   const handleAuthSuccess = async () => {
-    // User just authenticated, check their subscription/request count
+    // User just authenticated - wait for auth state to propagate
+    // Then check subscription and submit
+    setIsSubmitting(true);
+    
+    // Give auth state time to fully propagate
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Re-fetch subscription data for the now-authenticated user
     await checkSubscription();
-    // Small delay to let state update
-    setTimeout(() => {
-      handleFinalSubmit();
-    }, 500);
+    
+    // Proceed to submit
+    await handleFinalSubmit();
   };
 
   const handleFinalSubmit = async () => {
-    if (!user) {
+    // Get current user directly from Supabase (more reliable than hook state after fresh auth)
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    
+    if (!currentUser) {
       toast({
         title: "Please sign in",
         description: "You need to be signed in to submit a FOIA request.",
         variant: "destructive",
       });
       setStep("auth");
+      setIsSubmitting(false);
       return;
     }
 
-    // Re-check subscription before submitting
-    await checkSubscription();
+    // Get fresh request count for this user
+    const { count } = await supabase
+      .from("foia_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", currentUser.id);
+    
+    const currentRequestCount = count || 0;
 
     // Check if user can submit (first request free or has subscription)
-    if (!canSubmitFree()) {
+    const canSubmit = currentRequestCount === 0 || (subscription?.subscribed && (
+      getRequestLimit(subscription.product_id) === -1 || 
+      currentRequestCount < getRequestLimit(subscription.product_id)
+    ));
+
+    if (!canSubmit) {
       // Store the data for after payment
       const requestData = {
         agencyName: wizardData.agencyName,
@@ -209,6 +229,7 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
       };
       localStorage.setItem(PENDING_REQUEST_KEY, JSON.stringify(requestData));
       setStep("plan-selection");
+      setIsSubmitting(false);
       return;
     }
 
@@ -218,7 +239,7 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
       const { data: requestData, error: insertError } = await supabase
         .from("foia_requests")
         .insert({
-          user_id: user.id,
+          user_id: currentUser.id,
           agency_name: wizardData.agencyName,
           agency_type: wizardData.jurisdictionType,
           record_type: "other",
@@ -232,8 +253,8 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
       // Send confirmation email
       await supabase.functions.invoke("send-confirmation", {
         body: {
-          to: user.email,
-          name: user.user_metadata?.full_name || "Valued Customer",
+          to: currentUser.email,
+          name: currentUser.user_metadata?.full_name || "Valued Customer",
           agencyName: wizardData.agencyName,
           recordType: "FOIA Request",
           requestId: requestData.id,
@@ -242,10 +263,9 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
 
       setStep("success");
       
-      const isFirstRequest = requestCount === 0;
       toast({
         title: "Request Submitted!",
-        description: isFirstRequest 
+        description: currentRequestCount === 0 
           ? "Your first free request has been submitted. Check your email for confirmation."
           : "Check your email for confirmation details.",
       });
