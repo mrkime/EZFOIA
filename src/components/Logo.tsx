@@ -7,45 +7,41 @@ interface LogoProps {
 const Logo = ({ className = "" }: LogoProps) => {
   return (
     <Link to="/" className={`flex items-center gap-2.5 group ${className}`}>
-      {/* Simple line art document icon */}
+      {/* Sparkle star logo - AI-inspired with line art style */}
       <svg
-        width="28"
+        width="32"
         height="32"
-        viewBox="0 0 28 32"
+        viewBox="0 0 32 32"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="text-primary transition-transform group-hover:scale-105"
+        className="text-primary transition-transform group-hover:scale-105 group-hover:rotate-12"
       >
-        {/* Document outline */}
+        {/* Main 4-point star */}
         <path
-          d="M2 4C2 2.89543 2.89543 2 4 2H17L26 11V28C26 29.1046 25.1046 30 24 30H4C2.89543 30 2 29.1046 2 28V4Z"
+          d="M16 2L18.5 12.5L29 16L18.5 19.5L16 30L13.5 19.5L3 16L13.5 12.5L16 2Z"
           stroke="currentColor"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
           fill="none"
         />
-        {/* Folded corner */}
+        {/* Small accent sparkle - top right */}
         <path
-          d="M17 2V8C17 9.10457 17.8954 10 19 10H26"
+          d="M25 4L26 7L29 8L26 9L25 12L24 9L21 8L24 7L25 4Z"
           stroke="currentColor"
-          strokeWidth="2.5"
+          strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
           fill="none"
         />
-        {/* Text lines */}
-        <path
-          d="M7 16H21"
+        {/* Tiny accent dot - bottom left */}
+        <circle
+          cx="6"
+          cy="26"
+          r="1.5"
           stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <path
-          d="M7 21H17"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
+          strokeWidth="1.5"
+          fill="none"
         />
       </svg>
       
