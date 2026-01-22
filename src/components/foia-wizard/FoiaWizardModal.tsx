@@ -261,6 +261,12 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
     }
   };
 
+  const handleMessageChange = (message: string) => {
+    if (generatedRequest) {
+      setGeneratedRequest({ ...generatedRequest, message });
+    }
+  };
+
   const handleOpenChange = (newOpen: boolean) => {
     if (!isSubmitting) {
       setOpen(newOpen);
@@ -277,119 +283,127 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
     }
   };
 
-  const handleMessageChange = (message: string) => {
-    if (generatedRequest) {
-      setGeneratedRequest({ ...generatedRequest, message });
-    }
-  };
+  // Check if we should show the progress bar
+  const showProgress = !["generating", "preview", "auth", "plan-selection", "success"].includes(step);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto bg-card border-border p-6 md:p-8">
-        {/* Progress Bar (not shown for special steps) */}
-        <WizardProgress currentStep={step} completedSteps={completedSteps} />
+      <DialogContent className="w-screen h-screen max-w-none max-h-none m-0 p-0 rounded-none border-0 bg-background flex flex-col">
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto px-6 py-12 md:py-16">
+            {/* Step Content */}
+            <AnimatePresence mode="wait">
+              {step === "agency" && (
+                <AgencyStep
+                  key="agency"
+                  data={wizardData}
+                  onUpdate={updateWizardData}
+                  onNext={() => goToStep("records")}
+                />
+              )}
 
-        {/* Step Content */}
-        <AnimatePresence mode="wait">
-          {step === "agency" && (
-            <AgencyStep
-              key="agency"
-              data={wizardData}
-              onUpdate={updateWizardData}
-              onNext={() => goToStep("records")}
-            />
-          )}
+              {step === "records" && (
+                <RecordsStep
+                  key="records"
+                  data={wizardData}
+                  onUpdate={updateWizardData}
+                  onNext={() => goToStep("timeframe")}
+                  onBack={() => goToStep("agency")}
+                />
+              )}
 
-          {step === "records" && (
-            <RecordsStep
-              key="records"
-              data={wizardData}
-              onUpdate={updateWizardData}
-              onNext={() => goToStep("timeframe")}
-              onBack={() => goToStep("agency")}
-            />
-          )}
+              {step === "timeframe" && (
+                <TimeframeStep
+                  key="timeframe"
+                  data={wizardData}
+                  onUpdate={updateWizardData}
+                  onNext={() => goToStep("identifiers")}
+                  onBack={() => goToStep("records")}
+                />
+              )}
 
-          {step === "timeframe" && (
-            <TimeframeStep
-              key="timeframe"
-              data={wizardData}
-              onUpdate={updateWizardData}
-              onNext={() => goToStep("identifiers")}
-              onBack={() => goToStep("records")}
-            />
-          )}
+              {step === "identifiers" && (
+                <IdentifiersStep
+                  key="identifiers"
+                  data={wizardData}
+                  onUpdate={updateWizardData}
+                  onNext={() => goToStep("format")}
+                  onBack={() => goToStep("timeframe")}
+                />
+              )}
 
-          {step === "identifiers" && (
-            <IdentifiersStep
-              key="identifiers"
-              data={wizardData}
-              onUpdate={updateWizardData}
-              onNext={() => goToStep("format")}
-              onBack={() => goToStep("timeframe")}
-            />
-          )}
+              {step === "format" && (
+                <FormatStep
+                  key="format"
+                  data={wizardData}
+                  onUpdate={updateWizardData}
+                  onNext={() => goToStep("context")}
+                  onBack={() => goToStep("identifiers")}
+                />
+              )}
 
-          {step === "format" && (
-            <FormatStep
-              key="format"
-              data={wizardData}
-              onUpdate={updateWizardData}
-              onNext={() => goToStep("context")}
-              onBack={() => goToStep("identifiers")}
-            />
-          )}
+              {step === "context" && (
+                <ContextStep
+                  key="context"
+                  data={wizardData}
+                  onUpdate={updateWizardData}
+                  onGenerate={handleGenerate}
+                  onBack={() => goToStep("format")}
+                />
+              )}
 
-          {step === "context" && (
-            <ContextStep
-              key="context"
-              data={wizardData}
-              onUpdate={updateWizardData}
-              onGenerate={handleGenerate}
-              onBack={() => goToStep("format")}
-            />
-          )}
+              {step === "generating" && (
+                <GeneratingStep key="generating" />
+              )}
 
-          {step === "generating" && (
-            <GeneratingStep key="generating" />
-          )}
+              {step === "preview" && generatedRequest && (
+                <PreviewStep
+                  key="preview"
+                  generatedRequest={generatedRequest}
+                  onMessageChange={handleMessageChange}
+                  onSubmit={handlePreviewSubmit}
+                  onBack={() => goToStep("context")}
+                  isSubmitting={isSubmitting}
+                  isFirstRequest={!user || requestCount === 0}
+                />
+              )}
 
-          {step === "preview" && generatedRequest && (
-            <PreviewStep
-              key="preview"
-              generatedRequest={generatedRequest}
-              onMessageChange={handleMessageChange}
-              onSubmit={handlePreviewSubmit}
-              onBack={() => goToStep("context")}
-              isSubmitting={isSubmitting}
-              isFirstRequest={!user || requestCount === 0}
-            />
-          )}
+              {step === "auth" && (
+                <AuthStep
+                  key="auth"
+                  onSuccess={handleAuthSuccess}
+                  onBack={() => goToStep("preview")}
+                />
+              )}
 
-          {step === "auth" && (
-            <AuthStep
-              key="auth"
-              onSuccess={handleAuthSuccess}
-              onBack={() => goToStep("preview")}
-            />
-          )}
+              {step === "plan-selection" && (
+                <PlanSelectionStep
+                  key="plan-selection"
+                  onBack={() => goToStep("preview")}
+                  onClose={() => setOpen(false)}
+                />
+              )}
 
-          {step === "plan-selection" && (
-            <PlanSelectionStep
-              key="plan-selection"
-              onBack={() => goToStep("preview")}
-              onClose={() => setOpen(false)}
-            />
-          )}
+              {step === "success" && (
+                <SuccessStep
+                  key="success"
+                  onClose={() => handleOpenChange(false)}
+                />
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
 
-          {step === "success" && (
-            <SuccessStep
-              key="success"
-              onClose={() => handleOpenChange(false)}
-            />
-          )}
-        </AnimatePresence>
+        {/* Bottom Progress Bar */}
+        {showProgress && (
+          <div className="border-t border-border bg-card/80 backdrop-blur-sm px-6 py-4">
+            <div className="max-w-2xl mx-auto">
+              <WizardProgress currentStep={step} completedSteps={completedSteps} />
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
