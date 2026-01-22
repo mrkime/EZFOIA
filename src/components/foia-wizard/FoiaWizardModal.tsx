@@ -309,10 +309,10 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="w-screen h-screen max-w-none max-h-none m-0 p-0 rounded-none border-0 bg-background flex flex-col">
+      <DialogContent className="w-screen h-[100dvh] max-w-none max-h-none m-0 p-0 rounded-none border-0 bg-background flex flex-col">
         {/* Main Content Area */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-2xl mx-auto px-6 py-12 md:py-16">
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12 md:py-16 pb-4">
             {/* Step Content */}
             <AnimatePresence mode="wait">
               {step === "agency" && (
@@ -416,9 +416,9 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
           </div>
         </div>
 
-        {/* Bottom Progress Bar */}
+        {/* Bottom Progress Bar - with safe area padding for mobile */}
         {showProgress && (
-          <div className="border-t border-border bg-card/80 backdrop-blur-sm px-6 py-4">
+          <div className="shrink-0 border-t border-border bg-card/80 backdrop-blur-sm px-4 sm:px-6 py-3 sm:py-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div className="max-w-2xl mx-auto">
               <WizardProgress currentStep={step} completedSteps={completedSteps} />
             </div>
