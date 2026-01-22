@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FeaturedBlogSkeleton, BlogCardSkeleton } from "@/components/ui/skeletons";
 import { Calendar, Clock, ArrowRight, BookOpen } from "lucide-react";
+import { BlogSEO } from "@/components/SEO";
 
 type BlogPost = {
   id: string;
@@ -69,6 +70,7 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <BlogSEO />
       <Navbar />
       
       <PageHeader

@@ -4,6 +4,7 @@ import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { FeaturesSEO } from "@/components/SEO";
 import {
   Smartphone, 
   Brain, 
@@ -147,6 +148,7 @@ const FeaturesPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <FeaturesSEO />
       <Navbar />
       
       <PageHeader

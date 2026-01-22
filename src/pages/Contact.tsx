@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Phone, MapPin, Clock, Send, MessageSquare, HelpCircle, FileQuestion } from "lucide-react";
+import { ContactSEO } from "@/components/SEO";
 
 const contactMethods = [
   {
@@ -83,6 +84,7 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <ContactSEO />
       <Navbar />
       
       <PageHeader

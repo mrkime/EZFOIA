@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, FileText, Clock, CheckCircle, AlertCircle, HelpCircle, Scale, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { FoiaGuideSEO } from "@/components/SEO";
 
 const FoiaGuide = () => {
   const steps = [
@@ -41,6 +42,7 @@ const FoiaGuide = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <FoiaGuideSEO />
       <Navbar />
       
       <PageHeader
