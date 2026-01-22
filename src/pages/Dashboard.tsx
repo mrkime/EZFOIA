@@ -35,6 +35,23 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("requests");
   const [showTour, setShowTour] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
+
+  // Fetch user profile for display name
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .single();
+        
+        setUserName(data?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || null);
+      }
+    };
+    fetchProfile();
+  }, [user]);
 
   // Check if user should see the tour
   useEffect(() => {
@@ -126,8 +143,9 @@ const Dashboard = () => {
       
       <main className="container mx-auto px-6 pt-32 pb-16">
         <div className="mb-8">
+          <p className="text-sm font-medium text-primary mb-1">Dashboard</p>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
-            Dashboard
+            Welcome{userName ? `, ${userName}` : ''}
           </h1>
           <p className="text-muted-foreground">
             Track your FOIA requests, manage your account, and access returned documents.
