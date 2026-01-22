@@ -20,24 +20,42 @@ serve(async (req) => {
     logStep("Function started");
     
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      throw new Error("No authorization header");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Verify user from JWT
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
-    if (userError || !user) {
-      throw new Error("Invalid user token");
+    // Create client with user's auth header for getClaims
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    
+    // Validate the JWT token
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      logStep("Auth failed", { error: claimsError?.message });
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
+    const userId = claimsData.claims.sub as string;
+    logStep("User authenticated", { userId });
+    
+    // Create service client for database operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     const { documentId, action, query } = await req.json();
-    logStep("Request received", { documentId, action, userId: user.id });
+    logStep("Request received", { documentId, action, userId });
 
     // Fetch document metadata
     const { data: doc, error: docError } = await supabase
@@ -51,7 +69,7 @@ serve(async (req) => {
     }
 
     // Verify ownership
-    if (doc.foia_requests.user_id !== user.id) {
+    if (doc.foia_requests.user_id !== userId) {
       throw new Error("Access denied");
     }
 
