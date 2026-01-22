@@ -3,7 +3,7 @@ import { Menu, X, LogOut, User, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import RequestFormModal from "./RequestFormModal";
+import { FoiaWizardModal } from "@/components/foia-wizard";
 import ThemeToggle from "./ThemeToggle";
 import Logo from "./Logo";
 import { motion, AnimatePresence } from "framer-motion";
@@ -239,9 +239,9 @@ const Navbar = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <RequestFormModal>
+                <FoiaWizardModal>
                   <Button variant="hero">New Request</Button>
-                </RequestFormModal>
+                </FoiaWizardModal>
               </>
             ) : (
               <>
@@ -249,9 +249,9 @@ const Navbar = () => {
                 <Link to="/auth">
                   <Button variant="ghost">Sign In</Button>
                 </Link>
-                <RequestFormModal>
+                <FoiaWizardModal>
                   <Button variant="hero">Get Started</Button>
-                </RequestFormModal>
+                </FoiaWizardModal>
               </>
             )}
           </div>
@@ -430,18 +430,18 @@ const Navbar = () => {
                           <LogOut className="w-4 h-4" />
                           Sign Out
                         </Button>
-                        <RequestFormModal>
+                        <FoiaWizardModal>
                           <Button variant="hero" className="w-full h-12">New Request</Button>
-                        </RequestFormModal>
+                        </FoiaWizardModal>
                       </>
                     ) : (
                       <>
                         <Link to="/auth">
                           <Button variant="ghost" className="w-full h-12">Sign In</Button>
                         </Link>
-                        <RequestFormModal>
+                        <FoiaWizardModal>
                           <Button variant="hero" className="w-full h-12">Get Started</Button>
-                        </RequestFormModal>
+                        </FoiaWizardModal>
                       </>
                     )}
                   </div>
