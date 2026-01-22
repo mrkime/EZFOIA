@@ -3,10 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import MarkdownContent from "@/components/ui/markdown-content";
 
 interface Message {
   role: "user" | "assistant";
@@ -116,13 +116,17 @@ const DocumentSearch = ({ documentId, fileName }: DocumentSearchProps) => {
                 key={i}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`text-sm p-3 rounded-lg ${
+                className={`p-3 rounded-lg ${
                   msg.role === "user"
-                    ? "bg-primary/10 text-foreground ml-8"
+                    ? "bg-primary/10 text-foreground ml-8 text-sm"
                     : "bg-muted text-muted-foreground mr-8"
                 }`}
               >
-                {msg.content}
+                {msg.role === "assistant" ? (
+                  <MarkdownContent content={msg.content} variant="compact" className="text-muted-foreground" />
+                ) : (
+                  msg.content
+                )}
               </motion.div>
             ))}
           </AnimatePresence>
