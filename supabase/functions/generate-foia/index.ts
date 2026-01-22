@@ -27,31 +27,52 @@ interface WizardData {
   additionalContext?: string;
 }
 
-const SYSTEM_PROMPT = `You are an expert FOIA (Freedom of Information Act) request specialist. Your task is to generate a clear, professional records request message for electronic submission.
+// Generate a standardized FOIA request message
+function generateFoiaMessage(data: WizardData): string {
+  const formatText = data.formatPreference === "digital" 
+    ? "in electronic format" 
+    : data.formatPreference === "physical" 
+      ? "as physical copies" 
+      : "in the format most readily available";
 
-CRITICAL RULES - YOU MUST FOLLOW THESE:
-1. ONLY use information explicitly provided by the user - DO NOT invent, assume, or hallucinate ANY details
-2. DO NOT include any placeholders like [YOUR NAME], [YOUR ADDRESS], [DATE], etc.
-3. DO NOT format as a letter - no salutations, signatures, or letter structure
-4. DO NOT make up names, dates, case numbers, or any specifics not provided
-5. If information is missing or marked as "not sure", acknowledge it naturally without inventing details
+  return `I am requesting access to records maintained by your agency concerning the subject described in this request.
 
-WHAT TO DO:
-1. Write a clear, direct request message suitable for an online form submission
-2. Use professional but accessible language
-3. Reference the specific records the user described
-4. Include any timeframe, identifiers, or context the user actually provided
-5. Mention format preference if specified
-6. Keep it concise and focused on what records are being requested
+Specifically, I am requesting copies of records that reasonably describe the materials identified during submission. This includes any responsive documents, electronic records, or digital media created or maintained by the agency in the course of its official business.
 
-The message should read like a well-written online form submission, not a formal legal letter.
+If the records are available electronically, I request that they be provided ${formatText}.
 
-Output format: Return a JSON object with the following structure:
-{
-  "message": "The request message as a string (NOT a letter, just the request content)",
-  "estimatedResponseTime": "Estimated response timeframe based on jurisdiction",
-  "tips": ["Array of 2-3 helpful tips for this specific request"]
-}`;
+If any portion of the requested records is exempt from disclosure, please provide the non-exempt portions and indicate the basis for any redactions or withholdings.
+
+If additional clarification is needed to process this request, please contact me before closing or denying the request.`;
+}
+
+function getEstimatedResponseTime(jurisdictionType: string): string {
+  switch (jurisdictionType) {
+    case "federal":
+      return "20-30 business days";
+    case "state":
+      return "10-15 business days";
+    case "local":
+      return "7-14 business days";
+    default:
+      return "10-20 business days";
+  }
+}
+
+function getTips(data: WizardData): string[] {
+  const tips: string[] = [
+    "Keep a copy of this request for your records",
+    "You have the right to appeal if your request is denied or partially fulfilled"
+  ];
+  
+  if (data.jurisdictionType === "federal") {
+    tips.push("Federal agencies must respond within 20 working days under FOIA");
+  } else {
+    tips.push("Response times vary by state - check your state's open records law for specifics");
+  }
+  
+  return tips;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -62,87 +83,23 @@ serve(async (req) => {
     logStep("Function started");
     
     const wizardData: WizardData = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+    logStep("Received wizard data", { agency: wizardData.agencyName, jurisdiction: wizardData.jurisdictionType });
 
-    // Build the prompt from wizard data
-    const userPrompt = buildUserPrompt(wizardData);
-    logStep("Built user prompt", { length: userPrompt.length });
+    // Generate the standardized message (no AI needed for the template)
+    const message = generateFoiaMessage(wizardData);
+    const estimatedResponseTime = getEstimatedResponseTime(wizardData.jurisdictionType);
+    const tips = getTips(wizardData);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.7,
-      }),
-    });
+    logStep("Generated FOIA request message");
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        logStep("AI gateway rate limit");
-        return new Response(
-          JSON.stringify({ error: "Service is busy. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 402) {
-        logStep("AI gateway quota exceeded");
-        return new Response(
-          JSON.stringify({ error: "Service temporarily unavailable. Please try again later." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const errorText = await response.text();
-      logStep("AI gateway error", { status: response.status, error: errorText });
-      throw new Error(`AI gateway error: ${response.status}`);
-    }
-
-    const aiResponse = await response.json();
-    const content = aiResponse.choices?.[0]?.message?.content;
-    
-    if (!content) {
-      throw new Error("No content in AI response");
-    }
-
-    logStep("Received AI response", { length: content.length });
-
-    // Parse the JSON response from the AI
-    let parsedResponse;
-    try {
-      // Extract JSON from the response (handle markdown code blocks)
-      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || 
-                        content.match(/```\s*([\s\S]*?)\s*```/) ||
-                        [null, content];
-      const jsonStr = jsonMatch[1] || content;
-      parsedResponse = JSON.parse(jsonStr.trim());
-    } catch (parseError) {
-      logStep("Failed to parse AI response as JSON, using fallback");
-      // Fallback: use the content as the message directly
-      parsedResponse = {
-        message: content,
-        estimatedResponseTime: wizardData.jurisdictionType === "federal" ? "20-30 business days" : "10-20 business days",
-        tips: [
-          "Keep a copy of this request for your records",
-          "You can appeal if your request is denied"
-        ]
-      };
-    }
-
-    logStep("Successfully generated FOIA request");
+    const response = {
+      message,
+      estimatedResponseTime,
+      tips
+    };
 
     return new Response(
-      JSON.stringify(parsedResponse),
+      JSON.stringify(response),
       { 
         status: 200, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -157,62 +114,3 @@ serve(async (req) => {
     );
   }
 });
-
-function buildUserPrompt(data: WizardData): string {
-  const parts: string[] = [];
-  
-  parts.push(`Generate a FOIA request letter for the following:`);
-  parts.push(``);
-  parts.push(`AGENCY INFORMATION:`);
-  parts.push(`- Agency Name: ${data.agencyName}`);
-  parts.push(`- Jurisdiction: ${data.jurisdictionType}`);
-  if (data.agencyState) parts.push(`- State: ${data.agencyState}`);
-  if (data.agencyCity) parts.push(`- City/County: ${data.agencyCity}`);
-  parts.push(``);
-  
-  parts.push(`RECORDS REQUESTED:`);
-  parts.push(data.recordsDescription);
-  parts.push(``);
-  
-  parts.push(`TIMEFRAME:`);
-  if (data.dateType === "exact" && data.exactDate) {
-    parts.push(`- Specific date: ${data.exactDate}`);
-  } else if (data.dateType === "range" && (data.dateRangeStart || data.dateRangeEnd)) {
-    parts.push(`- Date range: ${data.dateRangeStart || "earliest"} to ${data.dateRangeEnd || "present"}`);
-  } else {
-    parts.push(`- No specific timeframe provided (request all available records)`);
-  }
-  parts.push(``);
-  
-  if (data.relatedNames || data.caseNumber || data.relatedAddress) {
-    parts.push(`RELATED IDENTIFIERS:`);
-    if (data.relatedNames) parts.push(`- Names/Organizations: ${data.relatedNames}`);
-    if (data.caseNumber) parts.push(`- Case/Reference Number: ${data.caseNumber}`);
-    if (data.relatedAddress) parts.push(`- Related Address: ${data.relatedAddress}`);
-    parts.push(``);
-  }
-  
-  parts.push(`FORMAT PREFERENCE:`);
-  const formatMap: Record<string, string> = {
-    digital: "Electronic/digital format (PDF, email)",
-    physical: "Physical printed copies",
-    easiest: "Whatever format is most convenient for the agency"
-  };
-  parts.push(`- ${formatMap[data.formatPreference] || data.formatPreference}`);
-  parts.push(``);
-  
-  if (data.additionalContext) {
-    parts.push(`ADDITIONAL CONTEXT:`);
-    parts.push(data.additionalContext);
-    parts.push(``);
-  }
-  
-  parts.push(`Generate a clear, professional request message for electronic submission. CRITICAL REQUIREMENTS:`);
-  parts.push(`1. ONLY use the information provided above - do NOT invent any details`);
-  parts.push(`2. NO placeholders, NO letter formatting, NO signatures`);
-  parts.push(`3. Write it as a direct request suitable for an online form`);
-  parts.push(`4. If timeframe is "not sure" or missing, request "all available records" without inventing dates`);
-  parts.push(`5. Keep it concise and factual`);
-  
-  return parts.join("\n");
-}
