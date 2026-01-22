@@ -27,24 +27,30 @@ interface WizardData {
   additionalContext?: string;
 }
 
-const SYSTEM_PROMPT = `You are an expert FOIA (Freedom of Information Act) request drafter. Your task is to generate a professional, legally-compliant FOIA request letter based on the information provided.
+const SYSTEM_PROMPT = `You are an expert FOIA (Freedom of Information Act) request specialist. Your task is to generate a clear, professional records request message for electronic submission.
 
-Guidelines:
-1. Use formal, professional language
-2. Include all required legal elements for a valid FOIA request
-3. Reference applicable statutes (5 U.S.C. § 552 for federal, or state-specific laws)
-4. Be specific but not overly narrow to avoid missing relevant records
-5. Include a fee waiver request when appropriate (for journalists, researchers, or public interest)
-6. Request expedited processing if the context suggests urgency
-7. Specify the preferred format for receiving records
-8. Include contact information placeholders for the requester
-9. Set reasonable response expectations based on the agency type
+CRITICAL RULES - YOU MUST FOLLOW THESE:
+1. ONLY use information explicitly provided by the user - DO NOT invent, assume, or hallucinate ANY details
+2. DO NOT include any placeholders like [YOUR NAME], [YOUR ADDRESS], [DATE], etc.
+3. DO NOT format as a letter - no salutations, signatures, or letter structure
+4. DO NOT make up names, dates, case numbers, or any specifics not provided
+5. If information is missing or marked as "not sure", acknowledge it naturally without inventing details
+
+WHAT TO DO:
+1. Write a clear, direct request message suitable for an online form submission
+2. Use professional but accessible language
+3. Reference the specific records the user described
+4. Include any timeframe, identifiers, or context the user actually provided
+5. Mention format preference if specified
+6. Keep it concise and focused on what records are being requested
+
+The message should read like a well-written online form submission, not a formal legal letter.
 
 Output format: Return a JSON object with the following structure:
 {
-  "letter": "The complete FOIA request letter as a string",
-  "estimatedResponseTime": "Estimated response timeframe (e.g., '20-30 business days')",
-  "tips": ["Array of 2-4 helpful tips for this specific request"]
+  "message": "The request message as a string (NOT a letter, just the request content)",
+  "estimatedResponseTime": "Estimated response timeframe based on jurisdiction",
+  "tips": ["Array of 2-3 helpful tips for this specific request"]
 }`;
 
 serve(async (req) => {
@@ -122,14 +128,13 @@ serve(async (req) => {
       parsedResponse = JSON.parse(jsonStr.trim());
     } catch (parseError) {
       logStep("Failed to parse AI response as JSON, using fallback");
-      // Fallback: use the content as the letter directly
+      // Fallback: use the content as the message directly
       parsedResponse = {
-        letter: content,
+        message: content,
         estimatedResponseTime: wizardData.jurisdictionType === "federal" ? "20-30 business days" : "10-20 business days",
         tips: [
           "Keep a copy of this request for your records",
-          "You can appeal if your request is denied",
-          "Fees may apply for extensive searches or large document volumes"
+          "You can appeal if your request is denied"
         ]
       };
     }
@@ -202,13 +207,12 @@ function buildUserPrompt(data: WizardData): string {
     parts.push(``);
   }
   
-  parts.push(`Please generate a complete, professional FOIA request letter that includes:`);
-  parts.push(`1. Proper legal citations for the ${data.jurisdictionType} jurisdiction`);
-  parts.push(`2. Clear description of requested records`);
-  parts.push(`3. Format preference`);
-  parts.push(`4. Fee waiver request if appropriate`);
-  parts.push(`5. Contact information placeholders [YOUR NAME], [YOUR ADDRESS], [YOUR EMAIL], [YOUR PHONE]`);
-  parts.push(`6. Professional closing`);
+  parts.push(`Generate a clear, professional request message for electronic submission. CRITICAL REQUIREMENTS:`);
+  parts.push(`1. ONLY use the information provided above - do NOT invent any details`);
+  parts.push(`2. NO placeholders, NO letter formatting, NO signatures`);
+  parts.push(`3. Write it as a direct request suitable for an online form`);
+  parts.push(`4. If timeframe is "not sure" or missing, request "all available records" without inventing dates`);
+  parts.push(`5. Keep it concise and factual`);
   
   return parts.join("\n");
 }

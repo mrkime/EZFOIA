@@ -205,7 +205,7 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
         agencyName: wizardData.agencyName,
         agencyType: wizardData.jurisdictionType,
         recordType: "other",
-        recordDescription: generatedRequest?.letter || wizardData.recordsDescription,
+        recordDescription: generatedRequest?.message || wizardData.recordsDescription,
       };
       localStorage.setItem(PENDING_REQUEST_KEY, JSON.stringify(requestData));
       setStep("plan-selection");
@@ -222,7 +222,7 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
           agency_name: wizardData.agencyName,
           agency_type: wizardData.jurisdictionType,
           record_type: "other",
-          record_description: generatedRequest?.letter || wizardData.recordsDescription,
+          record_description: generatedRequest?.message || wizardData.recordsDescription,
         })
         .select()
         .single();
@@ -277,9 +277,9 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
     }
   };
 
-  const handleLetterChange = (letter: string) => {
+  const handleMessageChange = (message: string) => {
     if (generatedRequest) {
-      setGeneratedRequest({ ...generatedRequest, letter });
+      setGeneratedRequest({ ...generatedRequest, message });
     }
   };
 
@@ -359,7 +359,7 @@ export const FoiaWizardModal = ({ children }: FoiaWizardModalProps) => {
             <PreviewStep
               key="preview"
               generatedRequest={generatedRequest}
-              onLetterChange={handleLetterChange}
+              onMessageChange={handleMessageChange}
               onSubmit={handlePreviewSubmit}
               onBack={() => goToStep("context")}
               isSubmitting={isSubmitting}
