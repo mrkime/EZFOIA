@@ -7,10 +7,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight, Loader2, Crown } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Check, ArrowRight, ArrowLeft, Crown } from "lucide-react";
 import { STRIPE_PRICES, PlanKey, matchesPlan } from "@/lib/stripe-config";
 import { toast } from "sonner";
+import { EmbeddedCheckoutForm } from "@/components/EmbeddedCheckout";
 
 interface Plan {
   name: string;
@@ -69,29 +69,42 @@ interface UpgradePlanModalProps {
 }
 
 const UpgradePlanModal = ({ open, onOpenChange, currentPlanId }: UpgradePlanModalProps) => {
-  const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
-  const handleCheckout = async (planKey: PlanKey) => {
-    setLoadingPlan(planKey);
-    try {
-      const priceConfig = STRIPE_PRICES[planKey];
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          priceId: priceConfig.monthly.priceId,
-          mode: priceConfig.mode,
-        },
-      });
+  const handleSelectPlan = (planKey: PlanKey) => {
+    setCheckoutError(null);
+    setSelectedPlan(planKey);
+  };
 
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
-        onOpenChange(false);
-      }
-    } catch (error) {
-      console.error("Checkout error:", error);
-      toast.error("Failed to start checkout. Please try again.");
-    } finally {
-      setLoadingPlan(null);
+  const handleCheckoutComplete = () => {
+    toast.success("Payment Successful!", {
+      description: "Your plan has been upgraded.",
+    });
+    onOpenChange(false);
+    window.location.href = "/dashboard?payment=success";
+  };
+
+  const handleCheckoutError = (error: string) => {
+    setCheckoutError(error);
+    toast.error("Checkout Error", {
+      description: error,
+    });
+  };
+
+  const handleBackFromCheckout = () => {
+    setSelectedPlan(null);
+    setCheckoutError(null);
+  };
+
+  const handleOpenChange = (newOpen: boolean) => {
+    onOpenChange(newOpen);
+    if (!newOpen) {
+      // Reset state when closing
+      setTimeout(() => {
+        setSelectedPlan(null);
+        setCheckoutError(null);
+      }, 300);
     }
   };
 
@@ -100,8 +113,61 @@ const UpgradePlanModal = ({ open, onOpenChange, currentPlanId }: UpgradePlanModa
     return matchesPlan(currentPlanId, planKey);
   };
 
+  // If a plan is selected, show embedded checkout
+  if (selectedPlan) {
+    const priceConfig = STRIPE_PRICES[selectedPlan];
+    const plan = plans.find(p => p.planKey === selectedPlan);
+
+    return (
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-card border-border">
+          {/* Header with back button */}
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBackFromCheckout}
+              className="gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to plans
+            </Button>
+          </div>
+
+          {/* Selected plan summary */}
+          <div className="bg-muted/30 rounded-lg p-4 border border-border mb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold">{plan?.name}</h3>
+                <p className="text-sm text-muted-foreground">{plan?.description}</p>
+              </div>
+              <div className="text-right">
+                <span className="font-display text-xl font-bold">{plan?.price}</span>
+                <span className="text-muted-foreground text-sm ml-1">{plan?.period}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Embedded Checkout */}
+          <div className="rounded-xl overflow-hidden border border-border bg-background">
+            <EmbeddedCheckoutForm
+              priceId={priceConfig.monthly.priceId}
+              mode={priceConfig.mode}
+              onComplete={handleCheckoutComplete}
+              onError={handleCheckoutError}
+            />
+          </div>
+
+          {checkoutError && (
+            <p className="text-sm text-destructive text-center mt-2">{checkoutError}</p>
+          )}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[700px] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl flex items-center gap-2">
@@ -119,11 +185,12 @@ const UpgradePlanModal = ({ open, onOpenChange, currentPlanId }: UpgradePlanModa
             return (
               <div
                 key={plan.planKey}
-                className={`relative rounded-xl p-5 border transition-all ${
+                className={`relative rounded-xl p-5 border transition-all cursor-pointer hover:border-primary/50 ${
                   plan.featured
                     ? "border-primary bg-primary/5"
                     : "border-border bg-muted/20"
-                } ${isCurrent ? "opacity-60" : ""}`}
+                } ${isCurrent ? "opacity-60 cursor-not-allowed" : ""}`}
+                onClick={() => !isCurrent && handleSelectPlan(plan.planKey)}
               >
                 {plan.featured && (
                   <span className="absolute -top-2 right-4 bg-cta-gradient text-primary-foreground text-xs font-semibold px-2 py-0.5 rounded-full">
@@ -158,12 +225,13 @@ const UpgradePlanModal = ({ open, onOpenChange, currentPlanId }: UpgradePlanModa
                     <Button
                       variant={plan.featured ? "hero" : "outline"}
                       size="sm"
-                      onClick={() => handleCheckout(plan.planKey)}
-                      disabled={loadingPlan !== null || isCurrent}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isCurrent) handleSelectPlan(plan.planKey);
+                      }}
+                      disabled={isCurrent}
                     >
-                      {loadingPlan === plan.planKey ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : isCurrent ? (
+                      {isCurrent ? (
                         "Current Plan"
                       ) : (
                         <>
