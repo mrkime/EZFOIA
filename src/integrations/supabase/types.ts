@@ -88,7 +88,10 @@ export type Database = {
       }
       foia_documents: {
         Row: {
+          ai_summary: string | null
+          ai_summary_generated_at: string | null
           created_at: string
+          extracted_text: string | null
           file_name: string
           file_path: string
           file_size: number | null
@@ -97,7 +100,10 @@ export type Database = {
           request_id: string
         }
         Insert: {
+          ai_summary?: string | null
+          ai_summary_generated_at?: string | null
           created_at?: string
+          extracted_text?: string | null
           file_name: string
           file_path: string
           file_size?: number | null
@@ -106,7 +112,10 @@ export type Database = {
           request_id: string
         }
         Update: {
+          ai_summary?: string | null
+          ai_summary_generated_at?: string | null
           created_at?: string
+          extracted_text?: string | null
           file_name?: string
           file_path?: string
           file_size?: number | null
