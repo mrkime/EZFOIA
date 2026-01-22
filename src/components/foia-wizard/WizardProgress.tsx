@@ -49,18 +49,18 @@ export const WizardProgress = ({ currentStep, completedSteps }: WizardProgressPr
       </div>
 
       {/* Step indicators */}
-      <div className="flex justify-between">
+      <div className="flex justify-between gap-1">
         {WIZARD_STEPS.map((step, index) => {
           const isCompleted = completedSteps.includes(step.id);
           const isCurrent = step.id === currentStep;
           const isPast = index < currentIndex;
 
           return (
-            <div key={step.id} className="flex flex-col items-center relative">
+            <div key={step.id} className="flex flex-col items-center relative flex-1 max-w-[60px] sm:max-w-none">
               {/* Pulse ring for current step */}
               {isCurrent && (
                 <motion.div
-                  className="absolute w-8 h-8 rounded-full border-2 border-primary"
+                  className="absolute w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-primary"
                   initial={{ scale: 1, opacity: 0.8 }}
                   animate={{ scale: 1.6, opacity: 0 }}
                   transition={{ 
@@ -72,7 +72,7 @@ export const WizardProgress = ({ currentStep, completedSteps }: WizardProgressPr
               
               <motion.div
                 className={`
-                  relative w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold
+                  relative w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-semibold
                   ${isCompleted || isPast
                     ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
                     : isCurrent
@@ -101,7 +101,7 @@ export const WizardProgress = ({ currentStep, completedSteps }: WizardProgressPr
                       delay: 0.1
                     }}
                   >
-                    <Check className="w-4 h-4" strokeWidth={3} />
+                    <Check className="w-3 h-3 sm:w-4 sm:h-4" strokeWidth={3} />
                   </motion.div>
                 ) : isCurrent ? (
                   <motion.div
@@ -109,7 +109,7 @@ export const WizardProgress = ({ currentStep, completedSteps }: WizardProgressPr
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </motion.div>
                 ) : (
                   <span className="opacity-70">{index + 1}</span>
@@ -118,7 +118,7 @@ export const WizardProgress = ({ currentStep, completedSteps }: WizardProgressPr
               
               <motion.span 
                 className={`
-                  mt-2 text-xs hidden sm:block font-medium
+                  mt-1.5 sm:mt-2 text-[9px] sm:text-xs font-medium text-center leading-tight truncate w-full
                   ${isCurrent 
                     ? "text-primary" 
                     : isCompleted || isPast 
