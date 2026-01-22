@@ -5,10 +5,12 @@ import Features from "@/components/Features";
 import Pricing from "@/components/Pricing";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
+import { HomeSEO } from "@/components/SEO";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
+      <HomeSEO />
       <Navbar />
       <Hero />
       <HowItWorks />

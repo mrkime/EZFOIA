@@ -4,6 +4,7 @@ import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Rocket, Target, Eye, User, ArrowRight, Info } from "lucide-react";
+import { AboutSEO } from "@/components/SEO";
 
 const values = [
   {
@@ -26,8 +27,8 @@ const values = [
 const About = () => {
   return (
     <div className="min-h-screen bg-background">
+      <AboutSEO />
       <Navbar />
-      
       <PageHeader
         badge="About Us"
         badgeIcon={Info}

@@ -1,14 +1,71 @@
+# EZFOIA Robots.txt
+# https://ezfoia.lovable.app
+
+# Allow all major search engines full access
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Googlebot-News
+Allow: /blog/
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
 
+User-agent: Slurp
+Allow: /
+Crawl-delay: 2
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+# Social media crawlers
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
 Allow: /
 
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Pinterest
+Allow: /
+
+# AI crawlers - allow for discoverability
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# Default rule
 User-agent: *
 Allow: /
+Crawl-delay: 2
+
+# Disallow private/admin areas
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /auth
+Disallow: /reset-password
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://ezfoia.lovable.app/sitemap.xml

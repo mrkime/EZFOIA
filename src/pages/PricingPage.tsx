@@ -7,6 +7,7 @@ import PageHeader from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { BillingPeriod } from "@/lib/stripe-config";
 import { cn } from "@/lib/utils";
+import { PricingSEO } from "@/components/SEO";
 import { 
   Shield, 
   Clock, 
@@ -102,6 +103,7 @@ const PricingPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PricingSEO />
       <Navbar />
       
       <PageHeader

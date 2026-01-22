@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Settings } from "lucide-react";
 import { toast } from "sonner";
+import { DashboardSEO } from "@/components/SEO";
 
 interface FoiaRequest {
   id: string;
@@ -112,6 +113,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <DashboardSEO />
       <Navbar />
       
       {/* Dashboard Tour */}

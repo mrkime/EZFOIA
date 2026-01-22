@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, Clock, ArrowLeft, BookOpen } from "lucide-react";
+import SEO from "@/components/SEO";
 
 type BlogPost = {
   id: string;
@@ -66,8 +67,48 @@ const BlogPostPage = () => {
     });
   };
 
+  // Create article schema for blog post
+  const articleSchema = post ? {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.excerpt,
+    image: post.image_url || "https://ezfoia.lovable.app/og-image.png",
+    datePublished: post.created_at,
+    dateModified: post.created_at,
+    author: {
+      "@type": "Organization",
+      name: "EZFOIA"
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "EZFOIA",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://ezfoia.lovable.app/favicon.png"
+      }
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://ezfoia.lovable.app/blog/${post.slug}`
+    }
+  } : undefined;
+
   return (
     <div className="min-h-screen bg-background">
+      {post && (
+        <SEO
+          title={post.title}
+          description={post.excerpt}
+          url={`/blog/${post.slug}`}
+          type="article"
+          publishedTime={post.created_at}
+          section={post.category}
+          image={post.image_url || undefined}
+          keywords={`FOIA, ${post.category}, public records, ${post.title.toLowerCase()}`}
+          jsonLd={articleSchema}
+        />
+      )}
       <Navbar />
       
       <div className="pt-24 pb-16 px-6">

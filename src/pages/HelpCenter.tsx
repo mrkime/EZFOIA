@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { HelpCategoryCardSkeleton, ArticleListSkeleton } from "@/components/ui/skeletons";
+import { HelpCenterSEO } from "@/components/SEO";
 import { 
   HelpCircle, 
   FileText, 
@@ -84,6 +85,7 @@ const HelpCenter = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <HelpCenterSEO />
       <Navbar />
       
       <PageHeader
