@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import RequestFormModal from "./RequestFormModal";
+import { FoiaWizardModal } from "./foia-wizard";
 
 const AnimatedGrid = () => {
   return (
@@ -122,7 +122,7 @@ const CTA = () => {
             to access the information they deserve. Start your first request today.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative z-10">
-            <RequestFormModal>
+            <FoiaWizardModal>
               <motion.div
                 className="relative group cursor-pointer"
                 whileHover={{ scale: 1.02 }}
@@ -176,7 +176,7 @@ const CTA = () => {
                   </motion.span>
                 </Button>
               </motion.div>
-            </RequestFormModal>
+            </FoiaWizardModal>
             <Link to="/contact">
               <Button variant="heroOutline" size="xl">
                 Talk to Our Team

@@ -16,7 +16,7 @@ import { FileText, Clock, CheckCircle, AlertCircle, Loader2, Eye, Plus, Search }
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import RequestFilters from "./RequestFilters";
-import RequestFormModal from "@/components/RequestFormModal";
+import { FoiaWizardModal } from "@/components/foia-wizard";
 import EmptyState from "@/components/ui/empty-state";
 import { toast } from "sonner";
 
@@ -137,7 +137,7 @@ const RequestHistoryTable = ({ requests, loading }: RequestHistoryTableProps) =>
     <Card className="bg-card-gradient border-border">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="font-display">Request History</CardTitle>
-        <RequestFormModal>
+        <FoiaWizardModal>
           <Button
             variant="hero"
             size="sm"
@@ -146,7 +146,7 @@ const RequestHistoryTable = ({ requests, loading }: RequestHistoryTableProps) =>
             <Plus className="w-4 h-4" />
             New Request
           </Button>
-        </RequestFormModal>
+        </FoiaWizardModal>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -169,12 +169,12 @@ const RequestHistoryTable = ({ requests, loading }: RequestHistoryTableProps) =>
             description="You haven't submitted any FOIA requests yet."
             secondaryDescription="Start by filing your first request to access public records."
             actionElement={
-              <RequestFormModal>
+              <FoiaWizardModal>
                 <Button variant="hero" className="gap-2">
                   <Plus className="w-4 h-4" />
                   Submit Your First Request
                 </Button>
-              </RequestFormModal>
+              </FoiaWizardModal>
             }
           />
         ) : (
