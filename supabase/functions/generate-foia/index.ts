@@ -38,12 +38,13 @@ CRITICAL RULES - FOLLOW THESE EXACTLY:
 6. Be specific about what records are being requested based on the user's description
 7. Include timeframe information ONLY if the user provided it
 8. Include identifiers (names, case numbers, addresses) ONLY if the user provided them
+9. Use the EXACT agency name provided - never say "the agency" or "your agency", use the actual name
 
-EXAMPLE OUTPUT FORMAT (adapt based on user input):
+EXAMPLE OUTPUT FORMAT (adapt based on user input, replace AGENCY_NAME with actual agency):
 ---
-I am requesting access to records maintained by your agency concerning [describe the specific subject from user input].
+I am requesting access to records maintained by AGENCY_NAME concerning [describe the specific subject from user input].
 
-Specifically, I am requesting copies of [specific records type from user input]. This includes any responsive documents, electronic records, or digital media created or maintained by the agency in the course of its official business.
+Specifically, I am requesting copies of [specific records type from user input]. This includes any responsive documents, electronic records, or digital media created or maintained by AGENCY_NAME in the course of its official business.
 
 [If timeframe provided: These records should cover the period from X to Y.]
 
@@ -63,6 +64,7 @@ function buildUserPrompt(data: WizardData): string {
   
   parts.push(`Generate a FOIA request message based on the following user input:`);
   parts.push(``);
+  parts.push(`AGENCY NAME: ${data.agencyName}`);
   parts.push(`RECORDS REQUESTED: ${data.recordsDescription}`);
   parts.push(`FORMAT PREFERENCE: ${data.formatPreference === "digital" ? "electronic format" : data.formatPreference === "physical" ? "physical copies" : "whatever format is most convenient"}`);
   
