@@ -17,7 +17,7 @@ import { GeneratedRequest } from "../types";
 
 interface PreviewStepProps {
   generatedRequest: GeneratedRequest;
-  onLetterChange: (letter: string) => void;
+  onMessageChange: (message: string) => void;
   onSubmit: () => void;
   onBack: () => void;
   isSubmitting: boolean;
@@ -26,7 +26,7 @@ interface PreviewStepProps {
 
 export const PreviewStep = ({ 
   generatedRequest, 
-  onLetterChange, 
+  onMessageChange, 
   onSubmit, 
   onBack,
   isSubmitting,
@@ -86,15 +86,15 @@ export const PreviewStep = ({
         
         {isEditing ? (
           <Textarea
-            value={generatedRequest.letter}
-            onChange={(e) => onLetterChange(e.target.value)}
-            className="min-h-[400px] font-mono text-sm bg-card border-border p-4 pt-12"
+            value={generatedRequest.message}
+            onChange={(e) => onMessageChange(e.target.value)}
+            className="min-h-[300px] text-sm bg-card border-border p-4 pt-12"
           />
         ) : (
-          <div className="bg-card border border-border rounded-xl p-6 pt-12 min-h-[400px]">
-            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-              {generatedRequest.letter}
-            </pre>
+          <div className="bg-card border border-border rounded-xl p-6 pt-12 min-h-[300px]">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed">
+              {generatedRequest.message}
+            </p>
           </div>
         )}
       </div>

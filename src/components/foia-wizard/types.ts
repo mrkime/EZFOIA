@@ -29,8 +29,7 @@ export interface WizardState {
 }
 
 export interface GeneratedRequest {
-  letter: string;
-  agencyAddress: string;
+  message: string;
   estimatedResponseTime: string;
   tips: string[];
 }
