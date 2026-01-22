@@ -29,7 +29,20 @@ export const AuthStep = ({ onSuccess, onBack }: AuthStepProps) => {
     try {
       if (isSignUp) {
         const { error } = await signUp(email, password, fullName);
-        if (error) throw error;
+        if (error) {
+          // Check if user already exists - auto-switch to sign in
+          if (error.message?.toLowerCase().includes("already registered") || 
+              error.message?.toLowerCase().includes("already exists")) {
+            toast({
+              title: "Account Exists",
+              description: "Switching to sign in...",
+            });
+            setIsSignUp(false);
+            setIsLoading(false);
+            return;
+          }
+          throw error;
+        }
         toast({
           title: "Account Created!",
           description: "Your first FOIA request is free.",
@@ -38,7 +51,11 @@ export const AuthStep = ({ onSuccess, onBack }: AuthStepProps) => {
         const { error } = await signIn(email, password);
         if (error) throw error;
       }
-      onSuccess();
+      
+      // Small delay to let auth state propagate
+      setTimeout(() => {
+        onSuccess();
+      }, 300);
     } catch (error: any) {
       toast({
         title: isSignUp ? "Sign Up Failed" : "Sign In Failed",
