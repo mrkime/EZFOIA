@@ -1,11 +1,10 @@
-import { motion } from "framer-motion";
-import { Crown, Check, ArrowRight, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Crown, Check, ArrowRight, Loader2, ArrowLeft, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { STRIPE_PRICES, PlanKey } from "@/lib/stripe-config";
-import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { logger } from "@/lib/logger";
+import { EmbeddedCheckoutForm } from "@/components/EmbeddedCheckout";
 
 interface Plan {
   name: string;
@@ -51,36 +50,101 @@ interface PlanSelectionStepProps {
 }
 
 export const PlanSelectionStep = ({ onBack, onClose }: PlanSelectionStepProps) => {
-  const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleCheckout = async (planKey: PlanKey) => {
-    setLoadingPlan(planKey);
-    try {
-      const priceConfig = STRIPE_PRICES[planKey];
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          priceId: priceConfig.monthly.priceId,
-          mode: priceConfig.mode,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
-        onClose();
-      }
-    } catch (error) {
-      logger.error("Checkout error:", error);
-      toast({
-        title: "Checkout Failed",
-        description: "Failed to start checkout. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingPlan(null);
-    }
+  const handleSelectPlan = (planKey: PlanKey) => {
+    setCheckoutError(null);
+    setSelectedPlan(planKey);
   };
+
+  const handleCheckoutComplete = () => {
+    toast({
+      title: "Payment Successful!",
+      description: "Your request is being submitted.",
+    });
+    // Redirect to dashboard after successful payment
+    window.location.href = "/dashboard?payment=success";
+  };
+
+  const handleCheckoutError = (error: string) => {
+    setCheckoutError(error);
+    toast({
+      title: "Checkout Error",
+      description: error,
+      variant: "destructive",
+    });
+  };
+
+  const handleBackFromCheckout = () => {
+    setSelectedPlan(null);
+    setCheckoutError(null);
+  };
+
+  // If a plan is selected, show the embedded checkout
+  if (selectedPlan) {
+    const priceConfig = STRIPE_PRICES[selectedPlan];
+    const plan = plans.find(p => p.planKey === selectedPlan);
+    
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -20 }}
+        className="space-y-4"
+      >
+        {/* Header with back button */}
+        <div className="flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBackFromCheckout}
+            className="gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to plans
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-8 w-8"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Selected plan summary */}
+        <div className="bg-muted/30 rounded-lg p-4 border border-border">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold">{plan?.name}</h3>
+              <p className="text-sm text-muted-foreground">{plan?.description}</p>
+            </div>
+            <div className="text-right">
+              <span className="font-display text-xl font-bold">{plan?.price}</span>
+              <span className="text-muted-foreground text-sm ml-1">{plan?.period}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Embedded Checkout */}
+        <div className="rounded-xl overflow-hidden border border-border bg-background">
+          <EmbeddedCheckoutForm
+            priceId={priceConfig.monthly.priceId}
+            mode={priceConfig.mode}
+            onComplete={handleCheckoutComplete}
+            onError={handleCheckoutError}
+          />
+        </div>
+
+        {checkoutError && (
+          <p className="text-sm text-destructive text-center">{checkoutError}</p>
+        )}
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -107,11 +171,12 @@ export const PlanSelectionStep = ({ onBack, onClose }: PlanSelectionStepProps) =
         {plans.map((plan) => (
           <div
             key={plan.planKey}
-            className={`relative rounded-xl p-5 border transition-all ${
+            className={`relative rounded-xl p-5 border transition-all cursor-pointer hover:border-primary/50 ${
               plan.featured
                 ? "border-primary bg-primary/5"
                 : "border-border bg-muted/20"
             }`}
+            onClick={() => handleSelectPlan(plan.planKey)}
           >
             {plan.featured && (
               <span className="absolute -top-2 right-4 bg-cta-gradient text-primary-foreground text-xs font-semibold px-2 py-0.5 rounded-full">
@@ -141,17 +206,13 @@ export const PlanSelectionStep = ({ onBack, onClose }: PlanSelectionStepProps) =
                 <Button
                   variant={plan.featured ? "hero" : "outline"}
                   size="sm"
-                  onClick={() => handleCheckout(plan.planKey)}
-                  disabled={loadingPlan !== null}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectPlan(plan.planKey);
+                  }}
                 >
-                  {loadingPlan === plan.planKey ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      Pay & Submit
-                      <ArrowRight className="w-3 h-3 ml-1" />
-                    </>
-                  )}
+                  Select
+                  <ArrowRight className="w-3 h-3 ml-1" />
                 </Button>
               </div>
             </div>

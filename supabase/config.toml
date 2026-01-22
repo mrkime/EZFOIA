@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.create-checkout]
 verify_jwt = false
 
+[functions.create-embedded-checkout]
+verify_jwt = false
+
 [functions.check-subscription]
 verify_jwt = false
 
@@ -16,4 +19,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.notify-status-change]
+verify_jwt = false
+
+[functions.generate-foia]
 verify_jwt = false
