@@ -103,6 +103,7 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
+    // Check for active subscriptions
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
@@ -110,28 +111,54 @@ serve(async (req) => {
     });
 
     const hasActiveSub = subscriptions.data.length > 0;
-    let productId = null;
-    let subscriptionEnd = null;
-    let priceId = null;
+    let productId: string | null = null;
+    let subscriptionEnd: string | null = null;
+    let priceId: string | null = null;
+    let paymentType: "subscription" | "one_time" | null = null;
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      // Handle case where current_period_end might be null or undefined
-      if (subscription.current_period_end) {
-        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      // Safely handle current_period_end
+      try {
+        if (subscription.current_period_end && typeof subscription.current_period_end === 'number') {
+          subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        }
+      } catch (dateError) {
+        logStep("Error parsing subscription end date", { error: String(dateError) });
       }
-      productId = subscription.items.data[0].price.product as string;
-      priceId = subscription.items.data[0].price.id;
+      productId = subscription.items.data[0]?.price?.product as string || null;
+      priceId = subscription.items.data[0]?.price?.id || null;
+      paymentType = "subscription";
       logStep("Active subscription found", { subscriptionId: subscription.id, productId, priceId, subscriptionEnd });
     } else {
-      logStep("No active subscription found");
+      // Check for completed one-time payments
+      logStep("Checking for one-time payments");
+      const sessions = await stripe.checkout.sessions.list({
+        customer: customerId,
+        status: "complete",
+        limit: 10,
+      });
+      
+      const paidSession = sessions.data.find((s: Stripe.Checkout.Session) => s.payment_status === "paid" && s.mode === "payment");
+      if (paidSession) {
+        paymentType = "one_time";
+        // Get the price/product from the session line items
+        if (paidSession.line_items?.data?.[0]) {
+          priceId = paidSession.line_items.data[0].price?.id || null;
+          productId = paidSession.line_items.data[0].price?.product as string || null;
+        }
+        logStep("One-time payment found", { sessionId: paidSession.id, productId, priceId });
+      } else {
+        logStep("No active subscription or one-time payment found");
+      }
     }
 
     return new Response(JSON.stringify({
-      subscribed: hasActiveSub,
+      subscribed: hasActiveSub || paymentType === "one_time",
       product_id: productId,
       price_id: priceId,
-      subscription_end: subscriptionEnd
+      subscription_end: subscriptionEnd,
+      payment_type: paymentType
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
