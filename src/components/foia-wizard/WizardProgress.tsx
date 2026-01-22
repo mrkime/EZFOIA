@@ -18,9 +18,9 @@ export const WizardProgress = ({ currentStep, completedSteps }: WizardProgressPr
   const progressPercent = ((currentIndex + 1) / WIZARD_STEPS.length) * 100;
 
   return (
-    <div className="w-full mb-8">
+    <div className="w-full">
       {/* Progress bar container */}
-      <div className="relative h-2 bg-muted/50 rounded-full overflow-hidden mb-4">
+      <div className="relative h-2 bg-muted/50 rounded-full overflow-hidden mb-3">
         {/* Animated progress fill */}
         <motion.div
           className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-primary/90"
