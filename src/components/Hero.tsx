@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Clock, FileSearch } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import RequestFormModal from "./RequestFormModal";
+import { FoiaWizardModal } from "./foia-wizard";
 
 const AnimatedGrid = () => {
   return (
@@ -173,7 +173,7 @@ const Hero = () => {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-in"
             style={{ y: contentY, animationDelay: '0.3s' }}
           >
-            <RequestFormModal>
+            <FoiaWizardModal>
               <motion.div
                 className="relative group cursor-pointer"
                 whileHover={{ scale: 1.02 }}
@@ -227,7 +227,7 @@ const Hero = () => {
                   </motion.span>
                 </Button>
               </motion.div>
-            </RequestFormModal>
+            </FoiaWizardModal>
             <Button variant="heroOutline" size="xl" onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>
               See How It Works
             </Button>
