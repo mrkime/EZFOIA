@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from "react-markdown";
 
 interface DocumentAISummaryProps {
   documentId: string;
@@ -134,7 +135,23 @@ const DocumentAISummary = ({ documentId, fileName, existingSummary }: DocumentAI
             transition={{ duration: 0.2 }}
           >
             <CardContent className="pt-0">
-              <p className="text-sm text-muted-foreground leading-relaxed">{summary}</p>
+              <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground">
+                <ReactMarkdown
+                  components={{
+                    h1: ({ children }) => <h3 className="text-base font-semibold text-foreground mt-3 mb-1">{children}</h3>,
+                    h2: ({ children }) => <h4 className="text-sm font-semibold text-foreground mt-3 mb-1">{children}</h4>,
+                    h3: ({ children }) => <h5 className="text-sm font-medium text-foreground mt-2 mb-1">{children}</h5>,
+                    p: ({ children }) => <p className="text-sm text-muted-foreground leading-relaxed mb-2">{children}</p>,
+                    ul: ({ children }) => <ul className="text-sm text-muted-foreground list-disc pl-4 mb-2 space-y-1">{children}</ul>,
+                    ol: ({ children }) => <ol className="text-sm text-muted-foreground list-decimal pl-4 mb-2 space-y-1">{children}</ol>,
+                    li: ({ children }) => <li className="text-sm leading-relaxed">{children}</li>,
+                    strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                    em: ({ children }) => <em className="italic">{children}</em>,
+                  }}
+                >
+                  {summary}
+                </ReactMarkdown>
+              </div>
             </CardContent>
           </motion.div>
         )}
