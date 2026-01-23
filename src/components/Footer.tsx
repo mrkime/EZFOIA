@@ -1,17 +1,16 @@
 import { Twitter, Linkedin, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import Logo from "./Logo";
-
 const Footer = () => {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({
+        behavior: 'smooth'
+      });
     }
   };
-
-  return (
-    <footer className="py-16 bg-background border-t border-border">
+  return <footer className="py-16 bg-background border-t border-border">
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
@@ -113,16 +112,10 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-muted-foreground text-sm">
-            © 2025 EZFOIA. All rights reserved. A subsidiary of ClearSightAI.
-          </p>
-          <p className="text-muted-foreground text-sm">
-            Built for transparency. Powered by AI.
-          </p>
+          <p className="text-muted-foreground text-sm">Copyright © 2026 EZFOIA. All rights reserved.</p>
+          <p className="text-muted-foreground text-sm">A subsidiary of ClearSightAI. See Clearly.</p>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
