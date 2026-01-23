@@ -2,18 +2,11 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageHeader from "@/components/PageHeader";
 import { Shield } from "lucide-react";
-
 const PrivacyPolicy = () => {
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Navbar />
       
-      <PageHeader
-        badge="Legal"
-        badgeIcon={Shield}
-        title="Privacy"
-        titleHighlight="Policy"
-      />
+      <PageHeader badge="Legal" badgeIcon={Shield} title="Privacy" titleHighlight="Policy" />
 
       <section className="pb-16 px-6">
         <div className="container mx-auto max-w-3xl">
@@ -112,8 +105,8 @@ const PrivacyPolicy = () => {
               <p className="text-muted-foreground leading-relaxed">
                 If you have any questions about this Privacy Policy or our data practices, please contact us at:
               </p>
-              <p className="text-muted-foreground mt-4">
-                <strong>Email:</strong> privacy@ezfoia.com<br />
+              <p className="text-muted-foreground mt-4">Email: privacy@ezfoia.com
+Address: 503 S Saginaw St, Suite 1, Flint, MI 48507<strong>Email:</strong> privacy@ezfoia.com<br />
                 <strong>Address:</strong> 1234 Innovation Drive, Suite 500, Washington, DC 20001
               </p>
             </section>
@@ -122,8 +115,6 @@ const PrivacyPolicy = () => {
       </section>
 
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default PrivacyPolicy;
