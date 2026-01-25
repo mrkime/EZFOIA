@@ -40,7 +40,7 @@ CRITICAL RULES - FOLLOW THESE EXACTLY:
 8. Include identifiers (names, case numbers, addresses) ONLY if the user provided them
 9. Use the EXACT agency name provided - never say "the agency" or "your agency", use the actual name
 
-EXAMPLE OUTPUT FORMAT (adapt based on user input, replace AGENCY_NAME with actual agency):
+EXAMPLE EXACT OUTPUT (adapt based on user input, replace AGENCY_NAME with actual agency):
 ---
 I am requesting access to records maintained by AGENCY_NAME concerning [describe the specific subject from user input, do NOT just copy the user input verbatim. read and think about the users input and rewrite it accordingly and in FOIA language. again do NOT make up information that is not real] pursuant to the Freedom of Information Act, concerning case number [CASE NUMBER (only if provided)], limited to [OR UNLIMITED TO (only if needed)] records directly related to [CONTEXT (only if needed)].
 
