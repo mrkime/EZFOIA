@@ -1,35 +1,35 @@
-// Stripe price and product configuration
+// Stripe price and product configuration (LIVE MODE)
 export const STRIPE_PRICES = {
   single: {
     monthly: {
-      priceId: "price_1SnvipCaAr00JhiPN0Fi3DYD",
-      productId: "prod_TlSe1wUh9GFxbP",
+      priceId: "price_1StMZfE3t728NStgIJqVSFmf",
+      productId: "prod_Tr4jVqNC9t3j8D",
     },
     annual: {
-      priceId: "price_1SnvipCaAr00JhiPN0Fi3DYD",
-      productId: "prod_TlSe1wUh9GFxbP",
+      priceId: "price_1StMZfE3t728NStgIJqVSFmf",
+      productId: "prod_Tr4jVqNC9t3j8D",
     },
     mode: "payment" as const,
   },
   professional: {
     monthly: {
-      priceId: "price_1Snvj2CaAr00JhiP3fVMOpMi",
-      productId: "prod_TlSern59fpwLjO",
+      priceId: "price_1StMa2E3t728NStgIqFcVm1c",
+      productId: "prod_Tr4jWPLKmaZuju",
     },
     annual: {
-      priceId: "price_1Snzs4CaAr00JhiPrsLrntT1",
-      productId: "prod_TlWvRFd8ZtAKBp",
+      priceId: "price_1StMa8E3t728NStgg8o3xGMA",
+      productId: "prod_Tr4j9VnTPhnZN5",
     },
     mode: "subscription" as const,
   },
   enterprise: {
     monthly: {
-      priceId: "price_1SnvjBCaAr00JhiPQCWHnqsb",
-      productId: "prod_TlSeuwSiAp2RfV",
+      priceId: "price_1StMaBE3t728NStgk6UNvPNB",
+      productId: "prod_Tr4jIyay9P3qxZ",
     },
     annual: {
-      priceId: "price_1SnzsECaAr00JhiPPlOSKJgB",
-      productId: "prod_TlWwKoQlAM8g1G",
+      priceId: "price_1StMaCE3t728NStgid7cANb2",
+      productId: "prod_Tr4j9U0RvTauTW",
     },
     mode: "subscription" as const,
   },
